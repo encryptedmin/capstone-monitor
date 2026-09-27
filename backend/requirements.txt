@@ -1,0 +1,10 @@
+Django==6.1.1
+djangorestframework==3.18.1
+djangorestframework-simplejwt==5.5.1
+django-cors-headers==4.9.0
+reportlab==4.4.10
+
+# Uncomment below when deploying against MySQL instead of the default
+# SQLite (see README.md "Switching to MySQL"). Requires MySQL client dev
+# headers on the host (e.g. `apt install default-libmysqlclient-dev`).
+# mysqlclient==2.2.4

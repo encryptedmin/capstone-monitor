@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette drawn from the Colegio de Kidapawan seal: deep purple ring,
+     gold sunburst, green mountains. Kept intentional and limited rather
+     than a generic blue SaaS scheme. */
+  --color-ink: #1b1330;
+  --color-base-900: #1a1030;
+  --color-base-800: #241452;
+  --color-base-700: #3a2270;
+  --color-base-600: #4c2e85;
+  --color-gold-500: #f0b429;
+  --color-gold-400: #f5c95c;
+  --color-teal-500: #1f8a70;
+  --color-teal-100: #d8f0e9;
+  --color-danger-500: #e1544c;
+  --color-danger-100: #fbe3e1;
+  --color-glass: rgba(255, 255, 255, 0.08);
+  --color-glass-light: rgba(255, 255, 255, 0.72);
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: var(--color-gold-400);
+    color: var(--color-ink);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Ambient mesh background used behind the whole app shell */
+  .app-mesh {
+    background-color: var(--color-base-900);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(240, 180, 41, 0.16), transparent 42%),
+      radial-gradient(circle at 88% 12%, rgba(31, 138, 112, 0.18), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(76, 46, 133, 0.55), transparent 60%),
+      linear-gradient(160deg, var(--color-base-900), var(--color-base-800) 55%, var(--color-base-700));
+  }
+
+  /* Glass panel on the dark mesh background */
+  .glass {
+    background: var(--color-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  /* Glass panel for content sitting on a light surface (e.g. modals) */
+  .glass-light {
+    background: var(--color-glass-light);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(27, 19, 48, 0.08);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
