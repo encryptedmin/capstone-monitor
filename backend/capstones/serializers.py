@@ -23,6 +23,8 @@ class CapstoneGroupSerializer(serializers.ModelSerializer):
     adviser_detail = UserSerializer(source="adviser", read_only=True)
     members = GroupMemberSerializer(many=True, read_only=True)
     member_count = serializers.IntegerField(source="members.count", read_only=True)
+    milestones_total = serializers.SerializerMethodField()
+    milestones_completed = serializers.SerializerMethodField()
 
     class Meta:
         model = CapstoneGroup
@@ -34,4 +36,12 @@ class CapstoneGroupSerializer(serializers.ModelSerializer):
             "created_at",
             "members",
             "member_count",
+            "milestones_total",
+            "milestones_completed",
         ]
+
+    def get_milestones_total(self, obj):
+        return obj.milestones.count()
+
+    def get_milestones_completed(self, obj):
+        return obj.milestones.filter(status="completed").count()

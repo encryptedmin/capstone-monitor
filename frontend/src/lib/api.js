@@ -108,17 +108,8 @@ export const notificationsApi = {
 
 export const reportsApi = {
   analytics: () => api.get("/reports/analytics/"),
-  // Auth is via Bearer header, so the PDF has to be fetched as a blob
-  // rather than linked to directly.
-  downloadPdf: async () => {
-    const res = await api.get("/reports/pdf/", { responseType: "blob" });
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "capstone_progress_report.pdf");
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  },
+};
+
+export const pdfApi = {
+  fetch: (url) => api.get(url, { responseType: "arraybuffer" }),
 };

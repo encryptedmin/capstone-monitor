@@ -117,5 +117,5 @@ class DepartmentPdfReportView(APIView):
         doc.build(elements)
         buffer.seek(0)
         return FileResponse(
-            buffer, as_attachment=True, filename="capstone_progress_report.pdf"
+            buffer, as_attachment=False, filename="capstone_progress_report.pdf"
         )

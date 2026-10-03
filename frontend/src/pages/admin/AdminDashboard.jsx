@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FolderKanban, ListChecks, FileClock, Download } from "lucide-react";
+import { FolderKanban, ListChecks, FileClock, Eye } from "lucide-react";
 import { reportsApi } from "../../lib/api";
-import { useToast } from "../../context/ToastContext";
 import { GlassCard, LightCard, Button, Spinner, EmptyState } from "../../components/ui";
+import { PdfViewerModal } from "../../components/PdfViewerModal";
 
 const cardIn = {
   hidden: { opacity: 0, y: 12 },
@@ -12,23 +12,11 @@ const cardIn = {
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
-  const [downloading, setDownloading] = useState(false);
-  const { push } = useToast();
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     reportsApi.analytics().then(({ data }) => setData(data));
   }, []);
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      await reportsApi.downloadPdf();
-    } catch {
-      push("Couldn't generate the report.", "error");
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   if (!data) {
     return (
@@ -57,8 +45,13 @@ export default function AdminDashboard() {
             ITE Capstone Analytics
           </h1>
         </div>
-        <Button icon={Download} onClick={handleDownload} loading={downloading}>
-          Download PDF report
+        <Button
+          icon={Eye}
+          onClick={() =>
+            setPreviewFile({ url: "/reports/pdf/", title: "Capstone progress report" })
+          }
+        >
+          View PDF report
         </Button>
       </div>
 
@@ -107,6 +100,7 @@ export default function AdminDashboard() {
           )}
         </LightCard>
       </motion.div>
+      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }

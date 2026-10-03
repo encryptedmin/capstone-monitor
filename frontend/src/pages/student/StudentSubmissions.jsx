@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, FileText, MessageSquare, Paperclip } from "lucide-react";
+import { Upload, FileText, MessageSquare, Eye } from "lucide-react";
 import { useMyGroup } from "./useMyGroup";
 import { submissionsApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
+import { PdfViewerModal } from "../../components/PdfViewerModal";
 import {
   LightCard,
   StatusBadge,
@@ -30,6 +31,7 @@ export default function StudentSubmissions() {
   const [milestoneId, setMilestoneId] = useState("");
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
   const { push } = useToast();
 
   const handleUpload = async (e) => {
@@ -103,14 +105,12 @@ export default function StudentSubmissions() {
                   </div>
                   <StatusBadge status={s.status} />
                 </div>
-                <a
-                  href={s.file}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={() => setPreviewFile({ url: s.file, title: s.milestone_title })}
                   className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
                 >
-                  <Paperclip size={13} /> View file
-                </a>
+                  <Eye size={14} /> View submission
+                </button>
 
                 {s.feedback?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-black/[0.06] space-y-3">
@@ -165,6 +165,7 @@ export default function StudentSubmissions() {
           </Button>
         </form>
       </Modal>
+      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }

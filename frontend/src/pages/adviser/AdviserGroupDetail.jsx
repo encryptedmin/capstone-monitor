@@ -7,10 +7,11 @@ import {
   ListChecks,
   FileText,
   MessageSquarePlus,
-  Paperclip,
+  Eye,
 } from "lucide-react";
 import { groupsApi, milestonesApi, submissionsApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
+import { PdfViewerModal } from "../../components/PdfViewerModal";
 import {
   LightCard,
   StatusBadge,
@@ -35,6 +36,7 @@ export default function AdviserGroupDetail() {
   const [tab, setTab] = useState("milestones");
   const [msModalOpen, setMsModalOpen] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
   const { push } = useToast();
 
   const load = useCallback(async () => {
@@ -191,14 +193,14 @@ export default function AdviserGroupDetail() {
                   </div>
 
                   <div className="flex items-center gap-4 mb-2">
-                    <a
-                      href={s.file}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() =>
+                        setPreviewFile({ url: s.file, title: s.milestone_title })
+                      }
                       className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
                     >
-                      <Paperclip size={13} /> View file
-                    </a>
+                      <Eye size={14} /> View submission
+                    </button>
                     <button
                       onClick={() => setFeedbackTarget(s)}
                       className="inline-flex items-center gap-1.5 text-sm text-gold-500 hover:brightness-90"
@@ -240,6 +242,7 @@ export default function AdviserGroupDetail() {
           load();
         }}
       />
+      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }
