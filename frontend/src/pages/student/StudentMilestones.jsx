@@ -50,7 +50,7 @@ export default function StudentMilestones() {
                 <span
                   className={`absolute left-0 top-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${
                     m.status === "completed"
-                      ? "bg-teal-500 text-white"
+                      ? "bg-cyan-500 text-white"
                       : "bg-black/[0.06] text-ink/50"
                   }`}
                 >

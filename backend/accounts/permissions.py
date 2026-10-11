@@ -31,3 +31,16 @@ class IsAdminOrReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return bool(request.user and request.user.is_authenticated)
         return bool(request.user and request.user.is_authenticated and request.user.is_admin)
+
+
+class IsAdminOrPublicReadOnly(BasePermission):
+    """
+    Admin can write; anyone (including an unauthenticated visitor on the
+    registration page) can read. Used for SchoolYear, which the public
+    registration form needs to list before the user has logged in.
+    """
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        return bool(request.user and request.user.is_authenticated and request.user.is_admin)

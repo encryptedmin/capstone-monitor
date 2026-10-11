@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import uuid
 from datetime import timedelta
 from pathlib import Path
 
@@ -175,7 +176,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "capstone-monitor@colegiodekidapawan.edu.ph"
+    "DEFAULT_FROM_EMAIL", "capstone-monitor@ite.edu.ph"
 )
 
 
@@ -183,7 +184,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "accounts.authentication.StrictJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -195,6 +196,10 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
 }
+
+# Generated once per backend process. JWTs minted by a previous process are
+# rejected so a server restart destroys active logins instead of reviving them.
+SESSION_SERVER_INSTANCE_ID = uuid.uuid4().hex
 
 # CORS -- allow the Vite dev server (and configurable prod frontend origin)
 CORS_ALLOWED_ORIGINS = os.environ.get(

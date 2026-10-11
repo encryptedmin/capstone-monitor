@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FolderKanban, ListChecks, FileClock, Eye } from "lucide-react";
-import { reportsApi } from "../../lib/api";
-import { GlassCard, LightCard, Button, Spinner, EmptyState } from "../../components/ui";
-import { PdfViewerModal } from "../../components/PdfViewerModal";
+import { CalendarRange, ExternalLink, FolderKanban, ListChecks, FileClock } from "lucide-react";
+import { reportsApi, schoolYearsApi } from "../../lib/api";
+import { GlassCard, LightCard, Button, Spinner, EmptyState, inputClass } from "../../components/ui";
 
 const cardIn = {
   hidden: { opacity: 0, y: 12 },
@@ -12,13 +11,49 @@ const cardIn = {
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
-  const [previewFile, setPreviewFile] = useState(null);
+  const [schoolYears, setSchoolYears] = useState([]);
+  const [selectedSchoolYear, setSelectedSchoolYear] = useState("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    reportsApi.analytics().then(({ data }) => setData(data));
-  }, []);
+    let cancelled = false;
+    setLoading(true);
 
-  if (!data) {
+    Promise.all([
+      reportsApi.analytics(selectedSchoolYear),
+      schoolYears.length ? Promise.resolve({ data: schoolYears }) : schoolYearsApi.list(),
+    ])
+      .then(([analyticsRes, yearsRes]) => {
+        if (cancelled) return;
+        setData(analyticsRes.data);
+        if (!schoolYears.length) {
+          setSchoolYears(yearsRes.data.results ?? yearsRes.data);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSchoolYear]);
+
+  const selectedScope =
+    selectedSchoolYear === "all"
+      ? "All AY ranges"
+      : schoolYears.find((year) => String(year.id) === String(selectedSchoolYear))?.label ||
+        "Selected AY range";
+
+  const openPdfReport = () => {
+    const params = new URLSearchParams({
+      school_year: selectedSchoolYear,
+      scope: selectedScope,
+    });
+    window.open(`/admin/report?${params.toString()}`, "_blank");
+  };
+
+  if (loading && !data) {
     return (
       <div className="flex justify-center py-24">
         <Spinner size={26} />
@@ -44,22 +79,38 @@ export default function AdminDashboard() {
           <h1 className="font-display text-2xl md:text-3xl text-white mt-1">
             ITE Capstone Analytics
           </h1>
+          <p className="text-white/45 text-sm mt-1">{selectedScope}</p>
         </div>
-        <Button
-          icon={Eye}
-          onClick={() =>
-            setPreviewFile({ url: "/reports/pdf/", title: "Capstone progress report" })
-          }
-        >
-          View PDF report
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="relative min-w-64">
+            <CalendarRange
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/45"
+            />
+            <select
+              className={`${inputClass} bg-white pl-9`}
+              value={selectedSchoolYear}
+              onChange={(event) => setSelectedSchoolYear(event.target.value)}
+            >
+              <option value="all">All AY ranges</option>
+              {schoolYears.map((year) => (
+                <option key={year.id} value={year.id}>
+                  {year.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button icon={ExternalLink} onClick={openPdfReport}>
+            View PDF report
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((s, i) => (
           <motion.div key={s.label} custom={i} variants={cardIn} initial="hidden" animate="show">
             <GlassCard className="p-5">
-              <s.icon size={18} className="text-gold-400 mb-3" />
+              <s.icon size={18} className="text-accent-400 mb-3" />
               <p className="text-white text-xl font-display">{s.value}</p>
               <p className="text-white/45 text-xs mt-0.5">{s.label}</p>
             </GlassCard>
@@ -100,7 +151,6 @@ export default function AdminDashboard() {
           )}
         </LightCard>
       </motion.div>
-      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }

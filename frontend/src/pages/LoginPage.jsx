@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { GraduationCap, LogIn, Eye, EyeOff } from "lucide-react";
+import { Cpu, LogIn, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { Button, inputClass } from "../components/ui";
 
@@ -40,8 +40,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen app-mesh flex items-center justify-center px-4 relative overflow-hidden">
       {/* Ambient blurred orbs -- static, decorative only */}
-      <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-gold-500/20 blur-[100px]" />
-      <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-teal-500/20 blur-[100px]" />
+      <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-accent-500/20 blur-[100px]" />
+      <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-cyan-500/20 blur-[100px]" />
 
       <motion.div
         variants={container}
@@ -50,14 +50,14 @@ export default function LoginPage() {
         className="relative w-full max-w-md"
       >
         <motion.div variants={item} className="flex flex-col items-center mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-gold-500 flex items-center justify-center mb-4 shadow-[0_12px_32px_-8px_rgba(240,180,41,0.5)]">
-            <GraduationCap size={26} className="text-base-900" />
+          <div className="h-14 w-14 rounded-2xl bg-accent-500 flex items-center justify-center mb-4 shadow-[0_12px_32px_-8px_rgba(47,111,237,0.5)]">
+            <Cpu size={26} className="text-white" />
           </div>
           <h1 className="font-display text-2xl text-white text-center">
             Capstone Project Monitor
           </h1>
           <p className="text-white/40 text-sm mt-1 text-center">
-            ITE Department · Colegio de Kidapawan
+            Information Technology Education
           </p>
         </motion.div>
 
@@ -115,8 +115,14 @@ export default function LoginPage() {
           </Button>
         </motion.form>
 
-        <motion.p variants={item} className="text-center text-white/30 text-xs mt-6">
-          Accounts are created by your department administrator.
+        <motion.p variants={item} className="text-center text-white/50 text-sm mt-6">
+          New student?{" "}
+          <Link to="/register" className="text-accent-400 hover:text-accent-300 font-medium">
+            Create an account
+          </Link>
+        </motion.p>
+        <motion.p variants={item} className="text-center text-white/30 text-xs mt-2">
+          Student registrations are reviewed by an administrator before sign-in is enabled.
         </motion.p>
       </motion.div>
     </div>

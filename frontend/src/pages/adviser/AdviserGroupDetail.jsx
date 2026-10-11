@@ -8,17 +8,19 @@ import {
   FileText,
   MessageSquarePlus,
   Eye,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
-import { groupsApi, milestonesApi, submissionsApi } from "../../lib/api";
+import { groupsApi, milestonesApi, submissionsApi, usersApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
 import { PdfViewerModal } from "../../components/PdfViewerModal";
 import {
   LightCard,
-  StatusBadge,
   EmptyState,
   Spinner,
   Button,
   Modal,
+  ModalActions,
   Field,
   inputClass,
 } from "../../components/ui";
@@ -68,6 +70,18 @@ export default function AdviserGroupDetail() {
     load();
   };
 
+  const toggleStudentActive = async (student, nextActive) => {
+    const verb = nextActive ? "re-enable" : "disable";
+    if (!confirm(`${nextActive ? "Re-enable" : "Disable"} ${student.student_profile?.full_name || student.username}? ${nextActive ? "" : "Their files stay on record, but they won't be able to sign in or submit anything new."}`)) return;
+    try {
+      await usersApi.setActive(student.id, nextActive);
+      push(`Student ${verb}d.`, "success");
+      load();
+    } catch (err) {
+      push(err.response?.data?.detail || `Couldn't ${verb} that student.`, "error");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-24">
@@ -89,9 +103,36 @@ export default function AdviserGroupDetail() {
         <ArrowLeft size={14} /> Back to groups
       </Link>
       <h1 className="font-display text-2xl text-white mb-1">{group.capstone_title}</h1>
-      <p className="text-white/40 text-sm mb-6">
-        {group.members.map((m) => m.student_detail?.student_profile?.full_name || m.student_detail?.username).join(", ")}
-      </p>
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        {group.members.map((m) => {
+          const student = m.student_detail;
+          if (!student) {
+            return (
+              <span key={m.id} className="text-white/40 text-sm">
+                {m.student_name_snapshot} (removed)
+              </span>
+            );
+          }
+          const isActive = student.account_status === "active";
+          return (
+            <span
+              key={m.id}
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 pl-3 pr-1.5 py-1 text-sm text-white/80"
+            >
+              {student.student_profile?.full_name || student.username}
+              <button
+                onClick={() => toggleStudentActive(student, !isActive)}
+                title={isActive ? "Disable student" : "Re-enable student"}
+                className={`p-1 rounded-full transition-colors ${
+                  isActive ? "text-white/40 hover:text-danger-500 hover:bg-white/10" : "text-accent-400 hover:bg-white/10"
+                }`}
+              >
+                {isActive ? <Ban size={12} /> : <RotateCcw size={12} />}
+              </button>
+            </span>
+          );
+        })}
+      </div>
 
       <div className="flex gap-2 mb-6">
         {[
@@ -138,7 +179,7 @@ export default function AdviserGroupDetail() {
                   <select
                     value={m.status}
                     onChange={(e) => updateMilestoneStatus(m.id, e.target.value)}
-                    className="text-xs rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 outline-none focus:border-gold-500"
+                    className="text-xs rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
@@ -182,7 +223,7 @@ export default function AdviserGroupDetail() {
                     <select
                       value={s.status}
                       onChange={(e) => updateSubmissionStatus(s.id, e.target.value)}
-                      className="text-xs rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 outline-none focus:border-gold-500"
+                      className="text-xs rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
                     >
                       {SUBMISSION_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
@@ -203,7 +244,7 @@ export default function AdviserGroupDetail() {
                     </button>
                     <button
                       onClick={() => setFeedbackTarget(s)}
-                      className="inline-flex items-center gap-1.5 text-sm text-gold-500 hover:brightness-90"
+                      className="inline-flex items-center gap-1.5 text-sm text-accent-500 hover:brightness-90"
                     >
                       <MessageSquarePlus size={14} /> Add feedback
                     </button>
@@ -254,6 +295,13 @@ function AddMilestoneModal({ open, onClose, groupId, onSaved }) {
   const [saving, setSaving] = useState(false);
   const { push } = useToast();
 
+  const handleClose = () => {
+    setTitle("");
+    setDescription("");
+    setDeadline("");
+    onClose();
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -277,7 +325,7 @@ function AddMilestoneModal({ open, onClose, groupId, onSaved }) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Add milestone">
+    <Modal open={open} onClose={handleClose} title="Add milestone">
       <form onSubmit={submit}>
         <Field label="Title">
           <input
@@ -305,9 +353,7 @@ function AddMilestoneModal({ open, onClose, groupId, onSaved }) {
             required
           />
         </Field>
-        <Button type="submit" loading={saving} className="w-full mt-2">
-          Add milestone
-        </Button>
+        <ModalActions onCancel={handleClose} submitLabel="Add milestone" loading={saving} />
       </form>
     </Modal>
   );
@@ -317,6 +363,11 @@ function FeedbackModal({ submission, onClose, onSaved }) {
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const { push } = useToast();
+
+  const handleClose = () => {
+    setComment("");
+    onClose();
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -334,7 +385,7 @@ function FeedbackModal({ submission, onClose, onSaved }) {
   };
 
   return (
-    <Modal open={!!submission} onClose={onClose} title="Add feedback">
+    <Modal open={!!submission} onClose={handleClose} title="Add feedback">
       <form onSubmit={submit}>
         <Field label={`On: ${submission?.milestone_title ?? ""}`}>
           <textarea
@@ -346,9 +397,7 @@ function FeedbackModal({ submission, onClose, onSaved }) {
             required
           />
         </Field>
-        <Button type="submit" loading={saving} className="w-full mt-2">
-          Post feedback
-        </Button>
+        <ModalActions onCancel={handleClose} submitLabel="Post feedback" loading={saving} />
       </form>
     </Modal>
   );

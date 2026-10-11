@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { authApi, tokenStore } from "../lib/api";
+import { authApi, terminateSession, tokenStore } from "../lib/api";
 
 const AuthContext = createContext(null);
 
@@ -27,6 +27,20 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [loadUser]);
 
+  useEffect(() => {
+    const handlePageHide = () => {
+      if (window.location.pathname === "/admin/report") {
+        tokenStore.clear();
+        return;
+      }
+      terminateSession();
+      tokenStore.clear();
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  }, []);
+
   const login = async (username, password) => {
     const { data } = await authApi.login(username, password);
     tokenStore.set(data.access, data.refresh);
@@ -34,9 +48,17 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const logout = () => {
-    tokenStore.clear();
+  const logout = async () => {
+    const refresh = tokenStore.refresh;
+    if (refresh) {
+      try {
+        await authApi.logout(refresh);
+      } catch {
+        // Local cleanup still wins if the network disappears during sign-out.
+      }
+    }
     setUser(null);
+    tokenStore.clear();
   };
 
   return (

@@ -5,9 +5,10 @@ built against the Django REST API in `../backend`.
 
 ## Design
 
-- Palette drawn from the Colegio de Kidapawan seal (deep purple, gold
-  sunburst, teal mountains) rather than a generic blue SaaS scheme.
-- Fraunces (serif) for headings, Inter (sans) for UI/body text.
+- An Information Technology Education theme (deep circuit-board navy,
+  electric-blue accent, cyan trace highlight) rather than a generic
+  blue SaaS scheme.
+- Space Grotesk for headings, Inter (sans) for UI/body text.
 - Frosted-glass panels floating on an ambient gradient-mesh background.
 - Motion kept to one orchestrated entrance per page plus hover/action
   feedback — no scattered per-card animations.

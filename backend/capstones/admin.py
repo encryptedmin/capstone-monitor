@@ -10,5 +10,6 @@ class GroupMemberInline(admin.TabularInline):
 
 @admin.register(CapstoneGroup)
 class CapstoneGroupAdmin(admin.ModelAdmin):
-    list_display = ["capstone_title", "adviser", "created_at"]
+    list_display = ["capstone_title", "adviser", "status", "school_year", "created_at"]
+    list_filter = ["status", "school_year"]
     inlines = [GroupMemberInline]

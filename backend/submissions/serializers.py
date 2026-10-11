@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Feedback, Submission
+from .models import Feedback, Submission, SubmissionHistory
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
@@ -12,8 +12,15 @@ class FeedbackSerializer(serializers.ModelSerializer):
         read_only_fields = ["adviser"]
 
 
+class SubmissionHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubmissionHistory
+        fields = ["id", "file", "status", "replaced_at"]
+
+
 class SubmissionSerializer(serializers.ModelSerializer):
     feedback = FeedbackSerializer(many=True, read_only=True)
+    history = SubmissionHistorySerializer(many=True, read_only=True)
     milestone_title = serializers.CharField(source="milestone.title", read_only=True)
     group_title = serializers.CharField(source="group.capstone_title", read_only=True)
 
@@ -27,7 +34,17 @@ class SubmissionSerializer(serializers.ModelSerializer):
             "milestone_title",
             "file",
             "submitted_at",
+            "updated_at",
             "status",
+            "resubmission_count",
             "feedback",
+            "history",
         ]
-        read_only_fields = ["submitted_at"]
+        read_only_fields = ["submitted_at", "updated_at", "resubmission_count"]
+
+
+class SubmissionResubmitSerializer(serializers.Serializer):
+    """Used only by SubmissionViewSet.resubmit -- a student replacing the
+    file on their own rejected/revision-needed submission."""
+
+    file = serializers.FileField()

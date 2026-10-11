@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette drawn from the Colegio de Kidapawan seal: deep purple ring,
-     gold sunburst, green mountains. Kept intentional and limited rather
-     than a generic blue SaaS scheme. */
-  --color-ink: #1b1330;
-  --color-base-900: #1a1030;
-  --color-base-800: #241452;
-  --color-base-700: #3a2270;
-  --color-base-600: #4c2e85;
-  --color-gold-500: #f0b429;
-  --color-gold-400: #f5c95c;
-  --color-teal-500: #1f8a70;
-  --color-teal-100: #d8f0e9;
+  /* Information Technology Education theme: deep circuit-board navy,
+     electric-blue accent, cyan "trace" highlight. Kept intentional and
+     limited rather than a generic blue SaaS scheme. */
+  --color-ink: #0b1220;
+  --color-base-900: #0a1630;
+  --color-base-800: #0f2248;
+  --color-base-700: #163463;
+  --color-base-600: #1f4a85;
+  --color-accent-500: #2f6fed;
+  --color-accent-400: #5b94ff;
+  --color-cyan-500: #14b8c4;
+  --color-cyan-100: #d4f5f7;
   --color-danger-500: #e1544c;
   --color-danger-100: #fbe3e1;
   --color-glass: rgba(255, 255, 255, 0.08);
   --color-glass-light: rgba(255, 255, 255, 0.72);
 
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -44,12 +44,12 @@
   }
 
   ::selection {
-    background: var(--color-gold-400);
-    color: var(--color-ink);
+    background: var(--color-accent-400);
+    color: #ffffff;
   }
 
   *:focus-visible {
-    outline: 2px solid var(--color-gold-500);
+    outline: 2px solid var(--color-accent-500);
     outline-offset: 2px;
   }
 }
@@ -59,9 +59,9 @@
   .app-mesh {
     background-color: var(--color-base-900);
     background-image:
-      radial-gradient(circle at 12% 8%, rgba(240, 180, 41, 0.16), transparent 42%),
-      radial-gradient(circle at 88% 12%, rgba(31, 138, 112, 0.18), transparent 45%),
-      radial-gradient(circle at 50% 100%, rgba(76, 46, 133, 0.55), transparent 60%),
+      radial-gradient(circle at 12% 8%, rgba(47, 111, 237, 0.22), transparent 42%),
+      radial-gradient(circle at 88% 12%, rgba(20, 184, 196, 0.2), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(31, 74, 133, 0.55), transparent 60%),
       linear-gradient(160deg, var(--color-base-900), var(--color-base-800) 55%, var(--color-base-700));
   }
 
@@ -78,7 +78,7 @@
     background: var(--color-glass-light);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(27, 19, 48, 0.08);
+    border: 1px solid rgba(11, 18, 32, 0.08);
   }
 
   .scrollbar-thin::-webkit-scrollbar {

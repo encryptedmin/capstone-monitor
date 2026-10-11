@@ -7,7 +7,13 @@ import {
   ListChecks,
   FileText,
   LogOut,
-  GraduationCap,
+  Cpu,
+  CalendarRange,
+  Settings,
+  Megaphone,
+  Inbox,
+  UserSearch,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
@@ -18,14 +24,21 @@ const NAV_BY_ROLE = {
     { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
     { to: "/admin/users", label: "Users", icon: Users },
     { to: "/admin/groups", label: "Capstone Groups", icon: FolderKanban },
+    { to: "/admin/adviser-status", label: "Adviser Status", icon: UserCheck },
+    { to: "/admin/school-years", label: "School Years", icon: CalendarRange },
+    { to: "/admin/announcements", label: "Announcements", icon: Megaphone },
+    { to: "/admin/settings", label: "Settings", icon: Settings },
   ],
   adviser: [
     { to: "/adviser", label: "My Groups", icon: FolderKanban, end: true },
+    { to: "/adviser/requests", label: "Title Requests", icon: Inbox },
   ],
   student: [
     { to: "/student", label: "Overview", icon: LayoutDashboard, end: true },
+    { to: "/student/adviser", label: "My Adviser", icon: UserSearch },
     { to: "/student/milestones", label: "Milestones", icon: ListChecks },
     { to: "/student/submissions", label: "Submissions", icon: FileText },
+    { to: "/student/announcements", label: "Announcements", icon: Megaphone },
   ],
 };
 
@@ -40,8 +53,8 @@ export function AppShell() {
   const displayName =
     user.student_profile?.full_name || user.adviser_profile?.full_name || user.username;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -50,12 +63,12 @@ export function AppShell() {
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col glass border-r border-white/10 px-5 py-6">
         <div className="flex items-center gap-2.5 px-1 mb-9">
-          <div className="h-9 w-9 rounded-xl bg-gold-500 flex items-center justify-center">
-            <GraduationCap size={19} className="text-base-900" />
+          <div className="h-9 w-9 rounded-xl bg-accent-500 flex items-center justify-center">
+            <Cpu size={19} className="text-white" />
           </div>
           <div>
             <p className="font-display text-white text-[15px] leading-tight">{PAGE_LABEL}</p>
-            <p className="text-[11px] text-white/40">ITE Department</p>
+            <p className="text-[11px] text-white/40">Information Technology Education</p>
           </div>
         </div>
 

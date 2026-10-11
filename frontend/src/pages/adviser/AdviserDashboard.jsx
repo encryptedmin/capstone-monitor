@@ -11,7 +11,10 @@ export default function AdviserDashboard() {
 
   useEffect(() => {
     groupsApi.list().then(({ data }) => {
-      setGroups(data.results ?? data);
+      const list = data.results ?? data;
+      // Pending title requests live on the dedicated "Title requests" page;
+      // this view is only the groups you've already accepted.
+      setGroups(list.filter((g) => g.status === "accepted"));
       setLoading(false);
     });
   }, []);
@@ -35,8 +38,8 @@ export default function AdviserDashboard() {
         <GlassCard className="p-2">
           <EmptyState
             icon={FolderKanban}
-            title="No capstone groups assigned yet"
-            description="Your department administrator will assign groups to you."
+            title="No accepted groups yet"
+            description="Accept a student's title request from Title Requests to see it here."
           />
         </GlassCard>
       ) : (
@@ -63,7 +66,7 @@ export default function AdviserDashboard() {
                     <div className="flex items-center gap-1.5 text-white/45 text-xs mb-4">
                       <Users2 size={13} /> {g.member_count} member{g.member_count === 1 ? "" : "s"}
                     </div>
-                    <ProgressBar value={completed} total={total} colorClass="bg-gold-500" />
+                    <ProgressBar value={completed} total={total} colorClass="bg-accent-500" />
                     <p className="text-white/40 text-xs mt-2">
                       {completed} of {total} milestones completed
                     </p>

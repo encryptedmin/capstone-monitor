@@ -1,147 +1,155 @@
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, X, FolderKanban } from "lucide-react";
-import { groupsApi, usersApi } from "../../lib/api";
+import { CalendarRange, UserPlus, X, FolderKanban, Eye } from "lucide-react";
+import { groupsApi, schoolYearsApi, usersApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
+import { PdfViewerModal } from "../../components/PdfViewerModal";
 import {
   LightCard,
   Button,
   Modal,
-  Field,
   inputClass,
   EmptyState,
   ProgressBar,
+  StatusBadge,
   Spinner,
 } from "../../components/ui";
 
+const STATUS_TABS = [
+  { key: "", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "accepted", label: "Accepted" },
+  { key: "rejected", label: "Rejected" },
+];
+
 export default function AdminGroups() {
   const [groups, setGroups] = useState([]);
-  const [advisers, setAdvisers] = useState([]);
   const [students, setStudents] = useState([]);
+  const [schoolYears, setSchoolYears] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [selectedSchoolYear, setSelectedSchoolYear] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("");
   const [manageGroup, setManageGroup] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: g }, { data: a }, { data: s }] = await Promise.all([
-      groupsApi.list(),
-      usersApi.list("adviser"),
+    const [{ data: g }, { data: s }, { data: y }] = await Promise.all([
+      groupsApi.list({
+        school_year: selectedSchoolYear,
+        ...(statusFilter ? { status: statusFilter } : {}),
+      }),
       usersApi.list("student"),
+      schoolYears.length ? Promise.resolve({ data: schoolYears }) : schoolYearsApi.list(),
     ]);
     setGroups(g.results ?? g);
-    setAdvisers(a.results ?? a);
     setStudents(s.results ?? s);
+    if (!schoolYears.length) setSchoolYears(y.results ?? y);
     setLoading(false);
   };
 
   useEffect(() => {
     load();
-  }, []);
+  }, [selectedSchoolYear, statusFilter]);
+
+  const visibleGroups = groups;
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="font-display text-2xl text-white mb-1">Capstone Groups</h1>
-          <p className="text-white/40 text-sm">Create teams, assign advisers, and enroll students.</p>
+          <p className="text-white/40 text-sm">
+            Groups are created when a student requests a title and an adviser accepts it. You can
+            still enroll additional members or reassign an adviser here.
+          </p>
         </div>
-        <Button icon={Plus} onClick={() => setCreateOpen(true)}>
-          Create group
-        </Button>
+        <label className="relative min-w-64">
+          <CalendarRange
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/45"
+          />
+          <select
+            className={`${inputClass} bg-white pl-9`}
+            value={selectedSchoolYear}
+            onChange={(event) => setSelectedSchoolYear(event.target.value)}
+          >
+            <option value="all">All AY ranges</option>
+            {schoolYears.map((year) => (
+              <option key={year.id} value={year.id}>
+                {year.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="flex gap-1.5 mb-5">
+        {STATUS_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setStatusFilter(t.key)}
+            className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              statusFilter === t.key ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
         <div className="flex justify-center py-24">
           <Spinner size={26} />
         </div>
-      ) : groups.length === 0 ? (
+      ) : visibleGroups.length === 0 ? (
         <LightCard className="p-2">
-          <EmptyState icon={FolderKanban} title="No capstone groups yet" />
+          <EmptyState icon={FolderKanban} title="No capstone groups found" />
         </LightCard>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map((g) => (
+          {visibleGroups.map((g) => (
             <LightCard key={g.id} className="p-5">
-              <h3 className="font-display text-lg text-ink mb-1">{g.capstone_title}</h3>
-              <p className="text-xs text-ink/45 mb-3">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <h3 className="font-display text-lg text-ink">{g.capstone_title}</h3>
+                <StatusBadge status={g.status} />
+              </div>
+              <p className="text-xs text-ink/45 mb-1">
                 Adviser: {g.adviser_detail?.adviser_profile?.full_name || g.adviser_detail?.username || "Unassigned"}
               </p>
-              <ProgressBar
-                value={g.milestones_completed}
-                total={g.milestones_total}
-                colorClass="bg-teal-500"
-              />
-              <p className="text-xs text-ink/40 mt-2 mb-4">{g.member_count} member(s) enrolled</p>
-              <Button variant="ghostLight" icon={UserPlus} onClick={() => setManageGroup(g)} className="w-full">
-                Manage members
-              </Button>
+              <p className="text-xs text-ink/45 mb-3">{g.school_year_label || "No term set"}</p>
+              {g.status === "accepted" && (
+                <>
+                  <ProgressBar value={g.milestones_completed} total={g.milestones_total} colorClass="bg-cyan-500" />
+                  <p className="text-xs text-ink/40 mt-2 mb-4">{g.member_count} member(s) enrolled</p>
+                </>
+              )}
+              <div className="flex items-center gap-2">
+                {g.title_document && (
+                  <Button
+                    variant="ghostLight"
+                    icon={Eye}
+                    onClick={() => setPreviewFile({ url: g.title_document, title: g.capstone_title })}
+                  >
+                    Title doc
+                  </Button>
+                )}
+                <Button variant="ghostLight" icon={UserPlus} onClick={() => setManageGroup(g)} className="flex-1">
+                  Members
+                </Button>
+              </div>
             </LightCard>
           ))}
         </div>
       )}
 
-      <CreateGroupModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        advisers={advisers}
-        onSaved={() => {
-          setCreateOpen(false);
-          load();
-        }}
-      />
       <ManageMembersModal
         group={manageGroup}
         students={students}
         onClose={() => setManageGroup(null)}
         onChanged={load}
       />
+      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
-  );
-}
-
-function CreateGroupModal({ open, onClose, advisers, onSaved }) {
-  const [title, setTitle] = useState("");
-  const [adviser, setAdviser] = useState("");
-  const [saving, setSaving] = useState(false);
-  const { push } = useToast();
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await groupsApi.create({ capstone_title: title, adviser: adviser || null });
-      push("Capstone group created.", "success");
-      setTitle("");
-      setAdviser("");
-      onSaved();
-    } catch {
-      push("Couldn't create that group.", "error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Modal open={open} onClose={onClose} title="Create capstone group">
-      <form onSubmit={submit}>
-        <Field label="Capstone title">
-          <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </Field>
-        <Field label="Faculty adviser">
-          <select className={inputClass} value={adviser} onChange={(e) => setAdviser(e.target.value)}>
-            <option value="">Unassigned for now</option>
-            {advisers.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.adviser_profile?.full_name || a.username}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Button type="submit" loading={saving} className="w-full mt-2">
-          Create group
-        </Button>
-      </form>
-    </Modal>
   );
 }
 
@@ -174,7 +182,7 @@ function ManageMembersModal({ group, students, onClose, onChanged }) {
   };
 
   return (
-    <Modal open={!!group} onClose={onClose} title={`Members · ${group.capstone_title}`}>
+    <Modal open={!!group} onClose={onClose} title={`Members - ${group.capstone_title}`}>
       <ul className="mb-5 space-y-2">
         {group.members.length === 0 && <p className="text-sm text-ink/40">No students enrolled yet.</p>}
         {group.members.map((m) => (
@@ -183,9 +191,9 @@ function ManageMembersModal({ group, students, onClose, onChanged }) {
             className="flex items-center justify-between rounded-lg bg-black/[0.03] px-3.5 py-2.5"
           >
             <span className="text-sm text-ink">
-              {m.student_detail?.student_profile?.full_name || m.student_detail?.username}
+              {m.student_detail?.student_profile?.full_name || m.student_detail?.username || m.student_name_snapshot}
             </span>
-            <button onClick={() => removeMember(m.id)} className="text-ink/30 hover:text-danger-500">
+            <button type="button" onClick={() => removeMember(m.id)} className="text-ink/30 hover:text-danger-500">
               <X size={15} />
             </button>
           </li>
@@ -211,6 +219,9 @@ function ManageMembersModal({ group, students, onClose, onChanged }) {
           Add
         </Button>
       </form>
+      <Button type="button" variant="ghostLight" className="w-full mt-4" onClick={onClose}>
+        Close
+      </Button>
     </Modal>
   );
 }

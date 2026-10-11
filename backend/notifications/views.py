@@ -2,8 +2,10 @@ from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Notification
-from .serializers import NotificationSerializer
+from accounts.permissions import IsAdmin
+
+from .models import Announcement, DocumentTemplate, Notification
+from .serializers import AnnouncementSerializer, DocumentTemplateSerializer, NotificationSerializer
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,3 +36,35 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     def mark_all_read(self, request):
         self.get_queryset().filter(is_read=False).update(is_read=True)
         return Response({"status": "all marked read"})
+
+
+class AnnouncementViewSet(viewsets.ModelViewSet):
+    """Admin posts/edits/deletes department announcements; everyone
+    authenticated can read them ('Post Announcements' use case)."""
+
+    serializer_class = AnnouncementSerializer
+    queryset = Announcement.objects.all()
+
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            return [IsAdmin()]
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(posted_by=self.request.user)
+
+
+class DocumentTemplateViewSet(viewsets.ModelViewSet):
+    """Admin uploads/manages documentation templates; everyone
+    authenticated can list/download them."""
+
+    serializer_class = DocumentTemplateSerializer
+    queryset = DocumentTemplate.objects.all()
+
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            return [IsAdmin()]
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)

@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
-import { ListChecks, FileText, Users2, ArrowUpRight } from "lucide-react";
+import { ListChecks, FileText, Users2, ArrowUpRight, Clock, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMyGroup } from "./useMyGroup";
-import { GlassCard, LightCard, ProgressBar, StatusBadge, EmptyState, Spinner } from "../../components/ui";
+import { GlassCard, LightCard, ProgressBar, StatusBadge, EmptyState, Spinner, Button } from "../../components/ui";
 
 const cardIn = {
   hidden: { opacity: 0, y: 12 },
@@ -26,12 +26,48 @@ export default function StudentDashboard() {
 
   if (!group) {
     return (
-      <GlassCard className="p-2">
-        <EmptyState
-          icon={Users2}
-          title="You haven't been added to a capstone group yet"
-          description="Ask your department administrator or adviser to enroll you into a group."
-        />
+      <GlassCard className="p-8 text-center">
+        <Users2 size={26} className="text-white/40 mx-auto mb-3" />
+        <h1 className="font-display text-xl text-white mb-1">No capstone title yet</h1>
+        <p className="text-white/50 text-sm mb-5">
+          Choose an adviser and upload your proposed title to get started.
+        </p>
+        <Link to="/student/adviser">
+          <Button>Choose an adviser</Button>
+        </Link>
+      </GlassCard>
+    );
+  }
+
+  if (group.status === "pending") {
+    return (
+      <GlassCard className="p-8 text-center">
+        <Clock size={26} className="text-accent-400 mx-auto mb-3" />
+        <h1 className="font-display text-xl text-white mb-1">Request pending</h1>
+        <p className="text-white/50 text-sm mb-5">
+          "{group.capstone_title}" is awaiting a decision from{" "}
+          {group.adviser_detail?.adviser_profile?.full_name || group.adviser_detail?.username}.
+        </p>
+        <Link to="/student/adviser">
+          <Button variant="ghost">View request</Button>
+        </Link>
+      </GlassCard>
+    );
+  }
+
+  if (group.status === "rejected") {
+    return (
+      <GlassCard className="p-8 text-center">
+        <XCircle size={26} className="text-danger-500 mx-auto mb-3" />
+        <h1 className="font-display text-xl text-white mb-1">Title declined</h1>
+        <p className="text-white/50 text-sm mb-5">
+          "{group.capstone_title}" was declined
+          {group.rejection_reason ? `: ${group.rejection_reason}` : "."} Choose a different adviser
+          to try again.
+        </p>
+        <Link to="/student/adviser">
+          <Button>Choose another adviser</Button>
+        </Link>
       </GlassCard>
     );
   }
@@ -66,7 +102,7 @@ export default function StudentDashboard() {
         {stats.map((s, i) => (
           <motion.div key={s.label} custom={i} variants={cardIn} initial="hidden" animate="show">
             <GlassCard className="p-5">
-              <s.icon size={18} className="text-gold-400 mb-3" />
+              <s.icon size={18} className="text-accent-400 mb-3" />
               <p className="text-white text-xl font-display">{s.value}</p>
               <p className="text-white/45 text-xs mt-0.5">{s.label}</p>
             </GlassCard>
@@ -95,7 +131,7 @@ export default function StudentDashboard() {
             <p className="text-3xl font-display text-ink mb-2">
               {milestones.length > 0 ? Math.round((completed / milestones.length) * 100) : 0}%
             </p>
-            <ProgressBar value={completed} total={milestones.length} colorClass="bg-teal-500" />
+            <ProgressBar value={completed} total={milestones.length} colorClass="bg-cyan-500" />
             <p className="text-xs text-ink/40 mt-3">
               {completed} of {milestones.length} milestones marked completed by your adviser.
             </p>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, FileText, MessageSquare, Eye } from "lucide-react";
+import { Upload, FileText, MessageSquare, Eye, RefreshCw, History } from "lucide-react";
 import { useMyGroup } from "./useMyGroup";
 import { submissionsApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
@@ -12,6 +12,7 @@ import {
   Spinner,
   Button,
   Modal,
+  ModalActions,
   Field,
   inputClass,
 } from "../../components/ui";
@@ -32,7 +33,14 @@ export default function StudentSubmissions() {
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
+  const [resubmitTarget, setResubmitTarget] = useState(null);
   const { push } = useToast();
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setFile(null);
+    setMilestoneId("");
+  };
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -105,18 +113,35 @@ export default function StudentSubmissions() {
                   </div>
                   <StatusBadge status={s.status} />
                 </div>
-                <button
-                  onClick={() => setPreviewFile({ url: s.file, title: s.milestone_title })}
-                  className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
-                >
-                  <Eye size={14} /> View submission
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setPreviewFile({ url: s.file, title: s.milestone_title })}
+                    className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
+                  >
+                    <Eye size={14} /> View submission
+                  </button>
+                  {(s.status === "rejected" || s.status === "revision_needed") && (
+                    <button
+                      onClick={() => setResubmitTarget(s)}
+                      className="inline-flex items-center gap-1.5 text-sm text-accent-500 hover:brightness-90"
+                    >
+                      <RefreshCw size={14} /> Resubmit
+                    </button>
+                  )}
+                </div>
+
+                {s.resubmission_count > 0 && (
+                  <p className="flex items-center gap-1.5 text-xs text-ink/40 mt-2">
+                    <History size={12} /> Resubmitted {s.resubmission_count}{" "}
+                    {s.resubmission_count === 1 ? "time" : "times"}
+                  </p>
+                )}
 
                 {s.feedback?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-black/[0.06] space-y-3">
                     {s.feedback.map((f) => (
                       <div key={f.id} className="flex gap-2.5">
-                        <MessageSquare size={15} className="text-gold-500 mt-0.5 shrink-0" />
+                        <MessageSquare size={15} className="text-accent-500 mt-0.5 shrink-0" />
                         <div>
                           <p className="text-sm text-ink/80">{f.comment}</p>
                           <p className="text-xs text-ink/35 mt-0.5">
@@ -133,7 +158,7 @@ export default function StudentSubmissions() {
         </div>
       )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New submission">
+      <Modal open={modalOpen} onClose={closeModal} title="New submission">
         <form onSubmit={handleUpload}>
           <Field label="Milestone">
             <select
@@ -160,12 +185,67 @@ export default function StudentSubmissions() {
               required
             />
           </Field>
-          <Button type="submit" loading={submitting} className="w-full mt-2">
-            Upload submission
-          </Button>
+          <ModalActions onCancel={closeModal} submitLabel="Upload submission" loading={submitting} />
         </form>
       </Modal>
       <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
+      <ResubmitModal
+        submission={resubmitTarget}
+        onClose={() => setResubmitTarget(null)}
+        onSaved={() => {
+          setResubmitTarget(null);
+          reload();
+        }}
+      />
     </div>
+  );
+}
+
+function ResubmitModal({ submission, onClose, onSaved }) {
+  const [file, setFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const { push } = useToast();
+
+  const handleClose = () => {
+    setFile(null);
+    onClose();
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!file) return;
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await submissionsApi.resubmit(submission.id, formData);
+      push("Resubmitted. Your adviser has been notified.", "success");
+      setFile(null);
+      onSaved();
+    } catch (err) {
+      push(err.response?.data?.detail || "Couldn't resubmit that file.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={!!submission} onClose={handleClose} title={`Resubmit · ${submission?.milestone_title ?? ""}`}>
+      <form onSubmit={submit}>
+        <p className="text-sm text-ink/55 mb-4">
+          The new file replaces your previous upload. Your adviser will see it as pending review
+          again.
+        </p>
+        <Field label="Replacement file">
+          <input
+            type="file"
+            className={inputClass}
+            onChange={(e) => setFile(e.target.files[0])}
+            required
+          />
+        </Field>
+        <ModalActions onCancel={handleClose} submitLabel="Resubmit" loading={saving} />
+      </form>
+    </Modal>
   );
 }

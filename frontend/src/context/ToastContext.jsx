@@ -11,7 +11,7 @@ const ICONS = {
 };
 
 const ACCENTS = {
-  success: "text-teal-500",
+  success: "text-cyan-500",
   error: "text-danger-500",
   info: "text-base-700",
 };

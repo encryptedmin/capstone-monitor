@@ -57,8 +57,8 @@ export function NotificationBell() {
         <Bell size={19} />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-gold-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-500" />
           </span>
         )}
       </button>
@@ -92,7 +92,7 @@ export function NotificationBell() {
                     key={n.id}
                     onClick={() => markOne(n.id)}
                     className={`w-full text-left px-4 py-3 border-b border-black/[0.04] last:border-0 hover:bg-black/[0.02] transition-colors ${
-                      !n.is_read ? "bg-gold-500/[0.06]" : ""
+                      !n.is_read ? "bg-accent-500/[0.06]" : ""
                     }`}
                   >
                     <p className="text-sm text-ink leading-snug">{n.message}</p>

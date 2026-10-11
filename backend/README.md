@@ -1,6 +1,6 @@
 # Web-Based Capstone Project Monitoring System — Backend (Django)
 
-Backend for the ITE Department capstone at Colegio de Kidapawan. Rebuilt on
+Backend for an Information Technology Education department's capstone monitoring system. Built on
 Django + Django REST Framework (originally proposed as ASP.NET Core /
 Blazor), designed to pair with a React (Vite) frontend.
 

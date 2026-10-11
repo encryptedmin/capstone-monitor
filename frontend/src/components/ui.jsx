@@ -5,7 +5,7 @@ import { X, Loader2 } from "lucide-react";
 
 const VARIANTS = {
   primary:
-    "bg-gold-500 text-base-900 hover:bg-gold-400 shadow-[0_8px_24px_-8px_rgba(240,180,41,0.55)]",
+    "bg-accent-500 text-white hover:bg-accent-400 shadow-[0_8px_24px_-8px_rgba(47,111,237,0.55)]",
   ghost: "bg-white/10 text-white hover:bg-white/20 border border-white/15",
   ghostLight: "bg-black/[0.04] text-ink hover:bg-black/[0.08] border border-black/10",
   danger: "bg-danger-500 text-white hover:brightness-110",
@@ -38,11 +38,11 @@ export function Button({
 
 const STATUS_STYLES = {
   pending: "bg-black/[0.06] text-ink/70",
-  in_progress: "bg-gold-500/15 text-gold-500",
-  completed: "bg-teal-100 text-teal-500",
+  in_progress: "bg-accent-500/15 text-accent-500",
+  completed: "bg-cyan-100 text-cyan-500",
   overdue: "bg-danger-100 text-danger-500",
-  approved: "bg-teal-100 text-teal-500",
-  revision_needed: "bg-gold-500/15 text-gold-500",
+  approved: "bg-cyan-100 text-cyan-500",
+  revision_needed: "bg-accent-500/15 text-accent-500",
   rejected: "bg-danger-100 text-danger-500",
 };
 
@@ -71,8 +71,8 @@ export function StatusBadge({ status }) {
 export function RoleBadge({ role }) {
   const styles = {
     admin: "bg-base-700 text-white",
-    adviser: "bg-teal-500 text-white",
-    student: "bg-gold-500 text-base-900",
+    adviser: "bg-cyan-500 text-white",
+    student: "bg-accent-500 text-white",
   };
   const labels = { admin: "Administrator", adviser: "Faculty Adviser", student: "Student" };
   return (
@@ -102,7 +102,7 @@ export function LightCard({ children, className = "", ...props }) {
 
 // --- Progress bar ----------------------------------------------------------
 
-export function ProgressBar({ value, total, colorClass = "bg-gold-500" }) {
+export function ProgressBar({ value, total, colorClass = "bg-accent-500" }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div>
@@ -121,6 +121,8 @@ export function ProgressBar({ value, total, colorClass = "bg-gold-500" }) {
 // --- Modal -------------------------------------------------------------
 
 export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
+  // Intentionally NO backdrop-click or Escape-to-close: a modal only closes via
+  // the X button or an explicit Cancel/Close button, so stray clicks never lose work.
   return (
     <AnimatePresence>
       {open && (
@@ -129,7 +131,9 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label={typeof title === "string" ? title : undefined}
         >
           <motion.div
             className={`glass-light w-full ${width} rounded-2xl p-6 max-h-[85vh] overflow-y-auto scrollbar-thin`}
@@ -137,11 +141,15 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-display text-xl font-medium text-ink">{title}</h3>
-              <button onClick={onClose} className="text-ink/40 hover:text-ink">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="text-ink/40 hover:text-ink"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -150,6 +158,20 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+// Standard Cancel + Submit button row for modal forms.
+export function ModalActions({ onCancel, submitLabel, loading = false, disabled = false }) {
+  return (
+    <div className="flex gap-3 mt-2">
+      <Button type="button" variant="ghostLight" className="flex-1" onClick={onCancel} disabled={loading}>
+        Cancel
+      </Button>
+      <Button type="submit" loading={loading} disabled={disabled} className="flex-1">
+        {submitLabel}
+      </Button>
+    </div>
   );
 }
 
@@ -182,7 +204,7 @@ export function Field({ label, children }) {
 
 export const inputClass =
   "w-full rounded-lg border border-black/10 bg-black/[0.02] px-3.5 py-2.5 text-sm text-ink " +
-  "placeholder:text-ink/35 focus:border-gold-500 focus:bg-white outline-none transition-colors";
+  "placeholder:text-ink/35 focus:border-accent-500 focus:bg-white outline-none transition-colors";
 
 export function Spinner({ size = 20 }) {
   return <Loader2 size={size} className="animate-spin text-ink/40" />;
