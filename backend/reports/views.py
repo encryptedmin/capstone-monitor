@@ -40,7 +40,7 @@ def _user_display_name(user):
     adviser_name = getattr(getattr(user, "adviser_profile", None), "full_name", "")
     student_name = getattr(getattr(user, "student_profile", None), "full_name", "")
     full_name = user.get_full_name()
-    return adviser_name or student_name or full_name or user.username
+    return adviser_name or student_name or full_name or user.email
 
 
 def _member_display_name(member):

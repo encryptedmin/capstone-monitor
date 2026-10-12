@@ -8,7 +8,16 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .names import name_key
 from .models import AdviserProfile, LoginSession, SchoolYear, StudentProfile, SystemSetting, User
+
+
+def validate_unique_email(value):
+    """Emails are the login identifier, so they are compared case-insensitively."""
+    value = value.strip().lower()
+    if User.objects.filter(email__iexact=value).exists():
+        raise serializers.ValidationError("An account with this email address already exists.")
+    return value
 
 
 class SchoolYearSerializer(serializers.ModelSerializer):
@@ -85,7 +94,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id",
-            "username",
             "email",
             "role",
             "is_active",
@@ -112,12 +120,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id",
-            "username",
             "email",
             "password",
             "role",
             "full_name",
         ]
+
+    def validate_email(self, value):
+        return validate_unique_email(value)
 
     def validate_role(self, value):
         if value != User.Role.ADVISER:
@@ -158,7 +168,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "username",
             "email",
             "password",
             "confirm_password",
@@ -167,6 +176,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             "section",
             "school_year",
         ]
+
+    def validate_email(self, value):
+        return validate_unique_email(value)
 
     def validate_role(self, value):
         if value != User.Role.STUDENT:
@@ -178,7 +190,28 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
         if attrs.get("role") == User.Role.STUDENT and not attrs.get("school_year"):
             raise serializers.ValidationError({"school_year": "School year/term is required for students."})
+        self._reject_listed_partner(attrs["full_name"], attrs.get("school_year"))
         return attrs
+
+    @staticmethod
+    def _reject_listed_partner(full_name, school_year):
+        """One capstone = one account: a person already named as a partner on
+        a pending/accepted capstone request must not create their own account."""
+        from capstones.models import CapstoneGroup, GroupMember
+
+        if GroupMember.objects.filter(
+            is_listed_partner=True,
+            name_key=name_key(full_name),
+            group__status__in=[CapstoneGroup.Status.PENDING, CapstoneGroup.Status.ACCEPTED],
+            group__school_year=school_year,
+        ).exists():
+            raise serializers.ValidationError(
+                {
+                    "full_name": "You are already listed as a member of a capstone group. "
+                    "Your group's representative already has an account, so you do not need "
+                    "to register. Contact the administrator if this is a mistake."
+                }
+            )
 
     def create(self, validated_data):
         full_name = validated_data.pop("full_name")
@@ -207,7 +240,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token["role"] = user.role
-        token["username"] = user.username
+        token["email"] = user.email
         return token
 
     def validate(self, attrs):

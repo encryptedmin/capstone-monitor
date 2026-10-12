@@ -19,7 +19,6 @@ class AccountCreationPolicyTests(APITestCase):
         response = self.client.post(
             "/api/auth/register/",
             {
-                "username": "student1",
                 "email": "student1@example.com",
                 "password": "StrongPass123!",
                 "confirm_password": "StrongPass123!",
@@ -32,7 +31,7 @@ class AccountCreationPolicyTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        user = User.objects.get(username="student1")
+        user = User.objects.get(email="student1@example.com")
         self.assertFalse(user.is_active)
         self.assertTrue(StudentProfile.objects.filter(user=user).exists())
 
@@ -40,7 +39,6 @@ class AccountCreationPolicyTests(APITestCase):
         response = self.client.post(
             "/api/auth/register/",
             {
-                "username": "adviser1",
                 "email": "adviser1@example.com",
                 "password": "StrongPass123!",
                 "confirm_password": "StrongPass123!",
@@ -51,11 +49,11 @@ class AccountCreationPolicyTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(User.objects.filter(username="adviser1").exists())
+        self.assertFalse(User.objects.filter(email="adviser1@example.com").exists())
 
     def test_admin_create_allows_advisers_only(self):
         admin = User.objects.create_user(
-            username="admin",
+            email="admin@example.com",
             password="StrongPass123!",
             role=User.Role.ADMIN,
             is_active=True,
@@ -65,7 +63,6 @@ class AccountCreationPolicyTests(APITestCase):
         adviser_response = self.client.post(
             "/api/users/",
             {
-                "username": "faculty1",
                 "email": "faculty1@example.com",
                 "password": "StrongPass123!",
                 "role": "adviser",
@@ -76,7 +73,6 @@ class AccountCreationPolicyTests(APITestCase):
         student_response = self.client.post(
             "/api/users/",
             {
-                "username": "student2",
                 "email": "student2@example.com",
                 "password": "StrongPass123!",
                 "role": "student",
@@ -88,15 +84,15 @@ class AccountCreationPolicyTests(APITestCase):
         )
 
         self.assertEqual(adviser_response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(AdviserProfile.objects.filter(user__username="faculty1").exists())
+        self.assertTrue(AdviserProfile.objects.filter(user__email="faculty1@example.com").exists())
         self.assertEqual(student_response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertFalse(User.objects.filter(username="student2").exists())
+        self.assertFalse(User.objects.filter(email="student2@example.com").exists())
 
 
 class StrictSessionTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="student",
+            email="student@example.com",
             password="StrongPass123!",
             role=User.Role.STUDENT,
             is_active=True,
@@ -106,7 +102,7 @@ class StrictSessionTests(APITestCase):
         return self.client.post(
             "/api/auth/login/",
             {
-                "username": "student",
+                "email": "student@example.com",
                 "password": "StrongPass123!",
                 "device_id": device_id,
             },
@@ -116,7 +112,7 @@ class StrictSessionTests(APITestCase):
     def test_login_requires_device_id(self):
         response = self.client.post(
             "/api/auth/login/",
-            {"username": "student", "password": "StrongPass123!"},
+            {"email": "student@example.com", "password": "StrongPass123!"},
             format="json",
         )
 
@@ -172,3 +168,65 @@ class StrictSessionTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         session = LoginSession.objects.get()
         self.assertEqual(session.end_reason, LoginSession.END_SERVER_RESTART)
+
+
+class EmailLoginTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="Juan.Cruz@Example.com", password="StrongPass123!",
+            role=User.Role.STUDENT, is_active=True,
+        )
+        self.school_year = SchoolYear.objects.create(
+            start_semester=1, start_year=2026, end_semester=2, end_year=2026, is_active=True)
+
+    def test_email_is_stored_lowercase_and_has_no_username(self):
+        self.assertEqual(self.user.email, "juan.cruz@example.com")
+        self.assertNotIn("username", [f.name for f in User._meta.get_fields()])
+
+    def test_login_with_email_is_case_insensitive(self):
+        response = self.client.post(
+            "/api/auth/login/",
+            {"email": "JUAN.CRUZ@example.com", "password": "StrongPass123!", "device_id": "d1"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.data["user"]["email"], "juan.cruz@example.com")
+        self.assertNotIn("username", response.data["user"])
+
+    def test_login_with_username_field_is_rejected(self):
+        response = self.client.post(
+            "/api/auth/login/",
+            {"username": "juan.cruz@example.com", "password": "StrongPass123!", "device_id": "d1"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_registration_rejects_duplicate_email_in_any_case(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "email": "JUAN.CRUZ@EXAMPLE.COM", "password": "StrongPass123!",
+                "confirm_password": "StrongPass123!", "role": "student",
+                "full_name": "Another Person", "school_year": self.school_year.id,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_registration_requires_email(self):
+        response = self.client.post(
+            "/api/auth/register/",
+            {
+                "password": "StrongPass123!", "confirm_password": "StrongPass123!",
+                "role": "student", "full_name": "No Email", "school_year": self.school_year.id,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
+    def test_create_superuser_defaults_to_admin_role(self):
+        admin = User.objects.create_superuser("root@example.com", "StrongPass123!")
+        self.assertEqual(admin.role, User.Role.ADMIN)
+        self.assertTrue(admin.is_superuser and admin.is_active)

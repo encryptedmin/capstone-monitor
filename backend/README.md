@@ -29,7 +29,7 @@ source venv/bin/activate        # venv\Scripts\activate on Windows
 pip install -r requirements.txt
 
 python manage.py migrate
-python manage.py createsuperuser   # then set role='admin' via /admin/ or shell
+python manage.py createsuperuser   # prompts for email + password; role is set to admin automatically
 python manage.py runserver
 ```
 
@@ -43,8 +43,20 @@ User" use case creates adviser/student accounts afterwards):
 ```python
 python manage.py shell
 >>> from accounts.models import User
->>> User.objects.create_superuser("admin", "admin@ck.edu", "yourpassword", role="admin")
+>>> User.objects.create_superuser("admin@ck.edu", "yourpassword")
 ```
+
+## Demo data
+
+```bash
+python manage.py seed_demo          # add demo data (no-op if already seeded)
+python manage.py seed_demo --reset  # rebuild it; only touches @ck.edu / @student.ck.edu accounts
+```
+
+Creates 4 advisers, 9 student accounts (one per capstone), 7 capstone groups (accepted / pending /
+rejected, across a past and the active term), milestones, submissions with
+adviser feedback, notifications, and announcements. All demo accounts use the
+password `Demo@12345` and log in with their email, e.g. `maria.santos@ck.edu` (adviser) or `juan.delacruz@student.ck.edu` (student).
 
 ## Database: SQLite vs MySQL
 
@@ -78,7 +90,7 @@ developer's machine.
 
 | Endpoint | Who | Purpose |
 |---|---|---|
-| `POST /api/auth/login/` | anyone | Get JWT access/refresh tokens (role embedded in token) |
+| `POST /api/auth/login/` | anyone | Body: `email`, `password`, `device_id`. There is no username; email (case-insensitive) is the login. Returns JWT access/refresh tokens (role embedded in token) |
 | `POST /api/auth/refresh/` | anyone | Refresh access token |
 | `GET /api/auth/me/` | authenticated | Current user profile |
 | `GET/POST/PUT/DELETE /api/users/` | admin | Manage Users module |

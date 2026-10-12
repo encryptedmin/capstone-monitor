@@ -24,7 +24,7 @@ from .serializers import (
 
 
 class LoginView(TokenObtainPairView):
-    """POST username + password -> access/refresh tokens + user info.
+    """POST email + password -> access/refresh tokens + user info.
     Django's auth backend rejects is_active=False users automatically,
     which covers both "pending approval" and "disabled" accounts."""
 
@@ -98,7 +98,7 @@ class RegisterView(generics.CreateAPIView):
             {
                 "detail": "Registration submitted. An administrator must approve your "
                 "account before you can log in.",
-                "username": user.username,
+                "email": user.email,
             },
             status=status.HTTP_201_CREATED,
         )

@@ -4,7 +4,7 @@ from .models import Feedback, Submission, SubmissionHistory
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
-    adviser_name = serializers.CharField(source="adviser.username", read_only=True)
+    adviser_name = serializers.CharField(source="adviser.adviser_profile.full_name", read_only=True, default=None)
 
     class Meta:
         model = Feedback

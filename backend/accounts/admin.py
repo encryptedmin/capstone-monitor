@@ -6,8 +6,20 @@ from .models import AdviserProfile, LoginSession, SchoolYear, StudentProfile, Sy
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ["username", "email", "role", "is_active", "approved_at", "created_at"]
-    fieldsets = UserAdmin.fieldsets + (("Role", {"fields": ("role", "approved_at")}),)
+    list_display = ["email", "role", "is_active", "approved_at", "created_at"]
+    list_filter = ["role", "is_active"]
+    search_fields = ["email"]
+    ordering = ["email"]
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        ("Personal info", {"fields": ("first_name", "last_name")}),
+        ("Role", {"fields": ("role", "approved_at")}),
+        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
+    )
+    add_fieldsets = (
+        (None, {"classes": ("wide",), "fields": ("email", "role", "password1", "password2")}),
+    )
 
 
 @admin.register(SchoolYear)
@@ -40,7 +52,7 @@ class LoginSessionAdmin(admin.ModelAdmin):
         "end_reason",
     ]
     list_filter = ["end_reason", "ended_at"]
-    search_fields = ["user__username", "device_id", "server_instance_id"]
+    search_fields = ["user__email", "device_id", "server_instance_id"]
     readonly_fields = [
         "id",
         "user",

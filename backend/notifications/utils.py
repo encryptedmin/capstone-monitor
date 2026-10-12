@@ -18,7 +18,8 @@ def notify_user(user, message):
 
 def notify_group(group, message):
     """Notify every student member plus the assigned adviser."""
-    recipients = [m.student for m in group.members.select_related("student")]
+    # Listed partners have no account (student is null), so only registered members are notified.
+    recipients = [m.student for m in group.members.select_related("student") if m.student]
     if group.adviser:
         recipients.append(group.adviser)
     Notification.objects.bulk_create(

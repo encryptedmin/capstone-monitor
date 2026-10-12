@@ -3,6 +3,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+from accounts.names import name_key
+
 
 def title_document_upload_path(instance, filename):
     # Uses a random prefix (not instance.pk) because Django writes the
@@ -67,6 +69,10 @@ class GroupMember(models.Model):
     student is nullable with a name snapshot so that hard-deleting a
     student account (Admin feature) does not erase the historical record
     of who was in the group -- only the live account reference goes away.
+
+    One capstone = one registered user. Only the group's representative (the
+    student who files the title request) has an account; partners are stored
+    as name-only rows (student=None, is_listed_partner=True).
     """
 
     group = models.ForeignKey(CapstoneGroup, on_delete=models.CASCADE, related_name="members")
@@ -79,6 +85,13 @@ class GroupMember(models.Model):
         limit_choices_to={"role": "student"},
     )
     student_name_snapshot = models.CharField(max_length=150, blank=True)
+    name_key = models.CharField(max_length=200, blank=True, db_index=True, editable=False)
+    is_listed_partner = models.BooleanField(
+        default=False,
+        help_text="True for a partner whose name was typed into the title application "
+        "by the group's registered representative. Such members have no user account "
+        "(student is null) and cannot register one while the group is pending/accepted.",
+    )
 
     class Meta:
         unique_together = ("group", "student")
@@ -89,5 +102,6 @@ class GroupMember(models.Model):
     def save(self, *args, **kwargs):
         if not self.student_name_snapshot and self.student_id:
             full_name = getattr(getattr(self.student, "student_profile", None), "full_name", "")
-            self.student_name_snapshot = full_name or self.student.username
+            self.student_name_snapshot = full_name or self.student.email
+        self.name_key = name_key(self.student_name_snapshot)
         super().save(*args, **kwargs)

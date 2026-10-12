@@ -10,7 +10,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):
-    posted_by_name = serializers.CharField(source="posted_by.username", read_only=True, default=None)
+    posted_by_name = serializers.CharField(source="posted_by.email", read_only=True, default=None)
 
     class Meta:
         model = Announcement
@@ -28,7 +28,7 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
 
 class DocumentTemplateSerializer(serializers.ModelSerializer):
-    uploaded_by_name = serializers.CharField(source="uploaded_by.username", read_only=True, default=None)
+    uploaded_by_name = serializers.CharField(source="uploaded_by.email", read_only=True, default=None)
 
     class Meta:
         model = DocumentTemplate

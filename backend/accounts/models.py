@@ -1,17 +1,51 @@
 import uuid
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from .names import name_key
+
+
+class UserManager(BaseUserManager):
+    """Email-based manager. Emails are stored lowercase and looked up
+    case-insensitively, so 'Juan@CK.edu' and 'juan@ck.edu' are one account."""
+
+    use_in_migrations = True
+
+    def _create_user(self, email, password, **extra):
+        if not email:
+            raise ValueError("An email address is required.")
+        user = self.model(email=self.normalize_email(email).lower(), **extra)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra):
+        extra.setdefault("is_staff", False)
+        extra.setdefault("is_superuser", False)
+        return self._create_user(email, password, **extra)
+
+    def create_superuser(self, email, password=None, **extra):
+        extra.setdefault("is_staff", True)
+        extra.setdefault("is_superuser", True)
+        extra.setdefault("role", "admin")
+        extra.setdefault("approved_at", timezone.now())
+        return self._create_user(email, password, **extra)
+
+    def get_by_natural_key(self, email):
+        return self.get(email__iexact=email)
+
 
 class User(AbstractUser):
     """
     Central user table (matches the ERD's Users table). The 'role' field
     drives Role-Based Access Control (RBAC) across the whole system.
+
+    There is no username: the email address is the login identifier.
 
     Account lifecycle:
       - Students self-register -> created with is_active=False,
@@ -30,6 +64,12 @@ class User(AbstractUser):
         ADVISER = "adviser", "Faculty Adviser"
         STUDENT = "student", "Student"
 
+    username = None
+    email = models.EmailField(
+        "email address",
+        unique=True,
+        error_messages={"unique": "An account with this email address already exists."},
+    )
     role = models.CharField(max_length=20, choices=Role.choices)
     created_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(
@@ -39,8 +79,18 @@ class User(AbstractUser):
         "Null means the account has never been approved (pending).",
     )
 
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()
+
     def __str__(self):
-        return f"{self.username} ({self.role})"
+        return f"{self.email} ({self.role})"
+
+    def save(self, *args, **kwargs):
+        if self.email:
+            self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
 
     @property
     def is_admin(self):
@@ -175,7 +225,7 @@ class LoginSession(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.username} on {self.device_id}"
+        return f"{self.user.email} on {self.device_id}"
 
     @property
     def is_active(self):
@@ -252,6 +302,7 @@ class StudentProfile(models.Model):
         User, on_delete=models.CASCADE, related_name="student_profile"
     )
     full_name = models.CharField(max_length=150)
+    name_key = models.CharField(max_length=200, blank=True, db_index=True, editable=False)
     section = models.CharField(max_length=50, blank=True)
     school_year = models.ForeignKey(
         SchoolYear,
@@ -263,6 +314,10 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return self.full_name
+
+    def save(self, *args, **kwargs):
+        self.name_key = name_key(self.full_name)
+        super().save(*args, **kwargs)
 
 
 class AdviserProfile(models.Model):
