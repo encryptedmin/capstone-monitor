@@ -72,7 +72,7 @@ export default function AdviserGroupDetail() {
 
   const toggleStudentActive = async (student, nextActive) => {
     const verb = nextActive ? "re-enable" : "disable";
-    if (!confirm(`${nextActive ? "Re-enable" : "Disable"} ${student.student_profile?.full_name || student.username}? ${nextActive ? "" : "Their files stay on record, but they won't be able to sign in or submit anything new."}`)) return;
+    if (!confirm(`${nextActive ? "Re-enable" : "Disable"} ${student.student_profile?.full_name || student.email}? ${nextActive ? "" : "Their files stay on record, but they won't be able to sign in or submit anything new."}`)) return;
     try {
       await usersApi.setActive(student.id, nextActive);
       push(`Student ${verb}d.`, "success");
@@ -98,17 +98,32 @@ export default function AdviserGroupDetail() {
     <div>
       <Link
         to="/adviser"
-        className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-sm mb-4"
+        className="inline-flex items-center gap-1.5 text-fg/62 hover:text-fg text-sm mb-4"
       >
         <ArrowLeft size={14} /> Back to groups
       </Link>
-      <h1 className="font-display text-2xl text-white mb-1">{group.capstone_title}</h1>
+      <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">{group.capstone_title}</h1>
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {group.members.map((m) => {
           const student = m.student_detail;
+          // Listed partners never had an account: show them as plain name chips.
+          if (m.is_listed_partner) {
+            return (
+              <span
+                key={m.id}
+                className="inline-flex items-center gap-2 rounded-full bg-fg/[0.06] ring-1 ring-inset ring-fg/10 pl-3 pr-2 py-1 text-sm text-fg/80"
+              >
+                {m.student_name_snapshot}
+                <span className="rounded-full bg-fg/10 px-2 py-0.5 text-[11px] font-medium text-fg/62">
+                  Partner
+                </span>
+              </span>
+            );
+          }
+          // A null student on a non-partner member means the account was removed.
           if (!student) {
             return (
-              <span key={m.id} className="text-white/40 text-sm">
+              <span key={m.id} className="text-fg/55 text-sm">
                 {m.student_name_snapshot} (removed)
               </span>
             );
@@ -117,14 +132,14 @@ export default function AdviserGroupDetail() {
           return (
             <span
               key={m.id}
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 pl-3 pr-1.5 py-1 text-sm text-white/80"
+              className="inline-flex items-center gap-2 rounded-full bg-fg/10 pl-3 pr-1.5 py-1 text-sm text-fg/80"
             >
-              {student.student_profile?.full_name || student.username}
+              {student.student_profile?.full_name || student.email}
               <button
                 onClick={() => toggleStudentActive(student, !isActive)}
                 title={isActive ? "Disable student" : "Re-enable student"}
                 className={`p-1 rounded-full transition-colors ${
-                  isActive ? "text-white/40 hover:text-danger-500 hover:bg-white/10" : "text-accent-400 hover:bg-white/10"
+                  isActive ? "text-fg/55 hover:text-danger hover:bg-fg/10" : "text-accent hover:bg-fg/10"
                 }`}
               >
                 {isActive ? <Ban size={12} /> : <RotateCcw size={12} />}
@@ -143,7 +158,7 @@ export default function AdviserGroupDetail() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
-              tab === t.key ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80"
+              tab === t.key ? "bg-fg/15 text-fg" : "text-fg/62 hover:text-fg/80"
             }`}
           >
             <t.icon size={14} /> {t.label}
@@ -154,7 +169,7 @@ export default function AdviserGroupDetail() {
       {tab === "milestones" && (
         <LightCard className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-lg text-ink">Milestones</h2>
+            <h2 className="font-display font-semibold text-lg text-fg">Milestones</h2>
             <Button variant="ghostLight" icon={Plus} onClick={() => setMsModalOpen(true)}>
               Add milestone
             </Button>
@@ -162,12 +177,12 @@ export default function AdviserGroupDetail() {
           {milestones.length === 0 ? (
             <EmptyState icon={ListChecks} title="No milestones yet" />
           ) : (
-            <ul className="divide-y divide-black/[0.06]">
+            <ul className="divide-y divide-fg/[0.06]">
               {milestones.map((m) => (
                 <li key={m.id} className="py-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-ink">{m.title}</p>
-                    <p className="text-xs text-ink/40">
+                    <p className="font-medium text-fg">{m.title}</p>
+                    <p className="text-xs text-fg/55">
                       Due{" "}
                       {new Date(m.deadline).toLocaleDateString(undefined, {
                         month: "short",
@@ -179,7 +194,7 @@ export default function AdviserGroupDetail() {
                   <select
                     value={m.status}
                     onChange={(e) => updateMilestoneStatus(m.id, e.target.value)}
-                    className="text-xs rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
+                    className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
@@ -211,8 +226,8 @@ export default function AdviserGroupDetail() {
                 <LightCard className="p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                     <div>
-                      <p className="font-medium text-ink">{s.milestone_title}</p>
-                      <p className="text-xs text-ink/40 mt-0.5">
+                      <p className="font-medium text-fg">{s.milestone_title}</p>
+                      <p className="text-xs text-fg/55 mt-0.5">
                         Submitted{" "}
                         {new Date(s.submitted_at).toLocaleDateString(undefined, {
                           month: "short",
@@ -223,7 +238,7 @@ export default function AdviserGroupDetail() {
                     <select
                       value={s.status}
                       onChange={(e) => updateSubmissionStatus(s.id, e.target.value)}
-                      className="text-xs rounded-full border border-black/10 bg-black/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
+                      className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
                     >
                       {SUBMISSION_OPTIONS.map((opt) => (
                         <option key={opt} value={opt}>
@@ -238,23 +253,23 @@ export default function AdviserGroupDetail() {
                       onClick={() =>
                         setPreviewFile({ url: s.file, title: s.milestone_title })
                       }
-                      className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
+                      className="inline-flex items-center gap-1.5 text-sm text-fg/70 hover:text-fg"
                     >
                       <Eye size={14} /> View submission
                     </button>
                     <button
                       onClick={() => setFeedbackTarget(s)}
-                      className="inline-flex items-center gap-1.5 text-sm text-accent-500 hover:brightness-90"
+                      className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
                     >
                       <MessageSquarePlus size={14} /> Add feedback
                     </button>
                   </div>
 
                   {s.feedback?.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-black/[0.06] space-y-2.5">
+                    <div className="mt-3 pt-3 border-t border-fg/[0.06] space-y-2.5">
                       {s.feedback.map((f) => (
-                        <p key={f.id} className="text-sm text-ink/70">
-                          <span className="text-ink/40">{f.adviser_name}:</span> {f.comment}
+                        <p key={f.id} className="text-sm text-fg/78">
+                          <span className="text-fg/55">{f.adviser_name}:</span> {f.comment}
                         </p>
                       ))}
                     </div>

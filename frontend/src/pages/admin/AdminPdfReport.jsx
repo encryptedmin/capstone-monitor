@@ -107,12 +107,12 @@ export default function AdminPdfReport() {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 text-ink flex flex-col">
-      <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-base-900/10 bg-white/90 px-4 py-3 backdrop-blur-md">
+    <div className="min-h-screen text-fg flex flex-col">
+      <header className="glass sticky top-3 z-20 mx-3 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3">
         <div>
-          <p className="text-xs font-semibold uppercase text-ink/45">PDF report</p>
-          <h1 className="font-display text-lg text-ink">Capstone progress report</h1>
-          <p className="text-xs text-ink/50">{scope}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">PDF report</p>
+          <h1 className="font-display font-semibold text-lg text-fg">Capstone progress report</h1>
+          <p className="text-xs text-fg/62">{scope}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -122,28 +122,28 @@ export default function AdminPdfReport() {
                 type="button"
                 onClick={() => setPageNum((page) => Math.max(1, page - 1))}
                 disabled={pageNum <= 1}
-                className="rounded-lg p-2 text-ink/60 hover:bg-base-900/5 disabled:opacity-30"
+                className="rounded-xl p-2 text-fg/70 hover:bg-fg/[0.08] disabled:opacity-30"
                 aria-label="Previous page"
               >
                 <ChevronLeft size={17} />
               </button>
-              <span className="w-16 text-center text-xs tabular-nums text-ink/60">
+              <span className="w-16 text-center text-xs tabular-nums text-fg/70">
                 {pageNum} / {pdf.numPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPageNum((page) => Math.min(pdf.numPages, page + 1))}
                 disabled={pageNum >= pdf.numPages}
-                className="rounded-lg p-2 text-ink/60 hover:bg-base-900/5 disabled:opacity-30"
+                className="rounded-xl p-2 text-fg/70 hover:bg-fg/[0.08] disabled:opacity-30"
                 aria-label="Next page"
               >
                 <ChevronRight size={17} />
               </button>
-              <div className="mx-1 h-6 w-px bg-base-900/10" />
+              <div className="mx-1 h-6 w-px bg-fg/10" />
               <button
                 type="button"
                 onClick={() => setScale((current) => Math.max(0.55, current - 0.15))}
-                className="rounded-lg p-2 text-ink/60 hover:bg-base-900/5"
+                className="rounded-xl p-2 text-fg/70 hover:bg-fg/[0.08]"
                 aria-label="Zoom out"
               >
                 <ZoomOut size={17} />
@@ -151,12 +151,12 @@ export default function AdminPdfReport() {
               <button
                 type="button"
                 onClick={() => setScale((current) => Math.min(2.4, current + 0.15))}
-                className="rounded-lg p-2 text-ink/60 hover:bg-base-900/5"
+                className="rounded-xl p-2 text-fg/70 hover:bg-fg/[0.08]"
                 aria-label="Zoom in"
               >
                 <ZoomIn size={17} />
               </button>
-              <div className="mx-1 h-6 w-px bg-base-900/10" />
+              <div className="mx-1 h-6 w-px bg-fg/10" />
             </>
           )}
           <Button type="button" icon={Download} onClick={downloadReport} disabled={!pdfBytes}>
@@ -167,7 +167,7 @@ export default function AdminPdfReport() {
 
       <main className="flex-1 overflow-auto px-4 py-6">
         {status === "loading" && (
-          <div className="flex min-h-[55vh] flex-col items-center justify-center gap-3 text-ink/45">
+          <div className="flex min-h-[55vh] flex-col items-center justify-center gap-3 text-fg/58">
             <Spinner size={26} />
             <p className="text-sm">Loading report...</p>
           </div>
@@ -175,9 +175,9 @@ export default function AdminPdfReport() {
 
         {status === "error" && (
           <div className="mx-auto mt-16 flex max-w-sm flex-col items-center gap-3 text-center">
-            <AlertTriangle size={24} className="text-danger-500" />
-            <p className="font-semibold text-ink">Couldn't load this report</p>
-            <p className="text-sm text-ink/55">Please try again while signed in as an administrator.</p>
+            <AlertTriangle size={24} className="text-danger" />
+            <p className="font-semibold text-fg">Couldn't load this report</p>
+            <p className="text-sm text-fg/66">Please try again while signed in as an administrator.</p>
             <Button type="button" variant="ghostLight" icon={RotateCcw} onClick={() => setLoadAttempt((n) => n + 1)}>
               Try again
             </Button>
@@ -187,7 +187,7 @@ export default function AdminPdfReport() {
         <div className="flex justify-center">
           <canvas
             ref={canvasRef}
-            className={`max-w-none rounded-sm bg-white shadow-xl ${
+            className={`max-w-none rounded-md bg-white shadow-2xl ring-1 ring-black/10 ${
               status === "ready" ? "block" : "hidden"
             }`}
           />

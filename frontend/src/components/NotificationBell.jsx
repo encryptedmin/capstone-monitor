@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CheckCheck } from "lucide-react";
 import { notificationsApi } from "../lib/api";
-import { EmptyState } from "./ui";
+import { EmptyState, IconButton } from "./ui";
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -50,18 +50,23 @@ export function NotificationBell() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      <IconButton
+        label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
         onClick={() => setOpen((o) => !o)}
-        className="relative rounded-full p-2 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+        aria-expanded={open}
+        aria-haspopup="true"
+        className="relative"
       >
-        <Bell size={19} />
+        <Bell size={18} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-500" />
+          <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-60" />
+            <span className="relative inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-gradient px-1 text-[10px] font-semibold text-white ring-2 ring-[var(--surface-solid)]">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           </span>
         )}
-      </button>
+      </IconButton>
 
       <AnimatePresence>
         {open && (
@@ -70,14 +75,14 @@ export function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-80 glass-light rounded-2xl shadow-xl overflow-hidden z-50"
+            className="glass-strong absolute right-0 mt-3 w-[min(22rem,calc(100vw-2rem))] rounded-2xl overflow-hidden z-50 origin-top-right"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.06]">
-              <p className="font-medium text-sm text-ink">Notifications</p>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-fg/[0.06]">
+              <p className="font-display font-semibold text-sm text-fg">Notifications</p>
               {unreadCount > 0 && (
                 <button
                   onClick={markAll}
-                  className="flex items-center gap-1 text-xs text-ink/50 hover:text-ink"
+                  className="flex items-center gap-1 text-xs text-fg/62 hover:text-fg"
                 >
                   <CheckCheck size={13} /> Mark all read
                 </button>
@@ -91,12 +96,12 @@ export function NotificationBell() {
                   <button
                     key={n.id}
                     onClick={() => markOne(n.id)}
-                    className={`w-full text-left px-4 py-3 border-b border-black/[0.04] last:border-0 hover:bg-black/[0.02] transition-colors ${
-                      !n.is_read ? "bg-accent-500/[0.06]" : ""
+                    className={`w-full text-left px-4 py-3 border-b border-fg/[0.04] last:border-0 hover:bg-fg/[0.05] transition-colors ${
+                      !n.is_read ? "bg-accent-500/[0.09] border-l-2 border-l-accent-500" : ""
                     }`}
                   >
-                    <p className="text-sm text-ink leading-snug">{n.message}</p>
-                    <p className="text-xs text-ink/40 mt-1">{timeAgo(n.created_at)}</p>
+                    <p className="text-sm text-fg leading-snug">{n.message}</p>
+                    <p className="text-xs text-fg/55 mt-1">{timeAgo(n.created_at)}</p>
                   </button>
                 ))
               )}

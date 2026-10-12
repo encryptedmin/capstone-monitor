@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FolderKanban, ArrowUpRight, Users2 } from "lucide-react";
 import { groupsApi } from "../../lib/api";
-import { GlassCard, ProgressBar, EmptyState, Spinner } from "../../components/ui";
+import { GlassCard, PageHeader, ProgressBar, EmptyState, Skeleton } from "../../components/ui";
 
 export default function AdviserDashboard() {
   const [groups, setGroups] = useState([]);
@@ -21,18 +21,24 @@ export default function AdviserDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-24">
-        <Spinner size={26} />
+      <div aria-busy="true">
+        <Skeleton className="h-16 w-2/3 mb-7" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-40" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-white mb-1">Your assigned groups</h1>
-      <p className="text-white/40 text-sm mb-7">
-        Review submissions, update milestones, and leave feedback for each team.
-      </p>
+      <PageHeader
+        eyebrow="Faculty adviser"
+        title="Your assigned groups"
+        description="Review submissions, update milestones, and leave feedback for each team."
+      />
 
       {groups.length === 0 ? (
         <GlassCard className="p-2">
@@ -49,25 +55,26 @@ export default function AdviserDashboard() {
             const total = g.milestones_total ?? 0;
             return (
               <motion.div
+                className="h-full"
                 key={g.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
               >
-                <Link to={`/adviser/groups/${g.id}`}>
-                  <GlassCard className="p-5 h-full hover:bg-white/[0.12] transition-colors group">
+                <Link to={`/adviser/groups/${g.id}`} className="block h-full rounded-2xl">
+                  <GlassCard className="glass-hover p-5 h-full group">
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="font-display text-lg text-white pr-2">{g.capstone_title}</h3>
+                      <h3 className="font-display text-lg font-semibold text-fg pr-2">{g.capstone_title}</h3>
                       <ArrowUpRight
                         size={16}
-                        className="text-white/30 group-hover:text-white/70 transition-colors shrink-0 mt-1"
+                        className="text-fg/45 group-hover:text-fg/78 transition-colors shrink-0 mt-1"
                       />
                     </div>
-                    <div className="flex items-center gap-1.5 text-white/45 text-xs mb-4">
+                    <div className="flex items-center gap-1.5 text-fg/58 text-xs mb-4">
                       <Users2 size={13} /> {g.member_count} member{g.member_count === 1 ? "" : "s"}
                     </div>
-                    <ProgressBar value={completed} total={total} colorClass="bg-accent-500" />
-                    <p className="text-white/40 text-xs mt-2">
+                    <ProgressBar value={completed} total={total}  />
+                    <p className="text-fg/55 text-xs mt-2">
                       {completed} of {total} milestones completed
                     </p>
                   </GlassCard>

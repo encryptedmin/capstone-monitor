@@ -102,7 +102,8 @@ export function PdfViewerModal({ file, onClose }) {
     <AnimatePresence>
       {file && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md p-4"
+          style={{ background: "var(--scrim)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -114,11 +115,11 @@ export function PdfViewerModal({ file, onClose }) {
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.18 }}
             onClick={(e) => e.stopPropagation()}
-            className="glass-light w-full max-w-4xl h-[88vh] rounded-2xl flex flex-col overflow-hidden"
+            className="glass-strong w-full max-w-4xl h-[88vh] rounded-3xl flex flex-col overflow-hidden"
           >
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-black/[0.08] shrink-0">
-              <p className="font-medium text-ink text-sm truncate">{file.title}</p>
+            <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-fg/[0.08] shrink-0">
+              <p className="font-medium text-fg text-sm truncate">{file.title}</p>
 
               <div className="flex items-center gap-1.5 shrink-0">
                 {status === "ready" && (
@@ -126,41 +127,41 @@ export function PdfViewerModal({ file, onClose }) {
                     <button
                       onClick={() => setPageNum((p) => Math.max(1, p - 1))}
                       disabled={pageNum <= 1}
-                      className="p-1.5 rounded-lg text-ink/60 hover:bg-black/5 disabled:opacity-30"
+                      className="p-1.5 rounded-lg text-fg/70 hover:bg-fg/5 disabled:opacity-30"
                     >
                       <ChevronLeft size={16} />
                     </button>
-                    <span className="text-xs text-ink/60 w-16 text-center tabular-nums">
+                    <span className="text-xs text-fg/70 w-16 text-center tabular-nums">
                       {pageNum} / {pdf.numPages}
                     </span>
                     <button
                       onClick={() => setPageNum((p) => Math.min(pdf.numPages, p + 1))}
                       disabled={pageNum >= pdf.numPages}
-                      className="p-1.5 rounded-lg text-ink/60 hover:bg-black/5 disabled:opacity-30"
+                      className="p-1.5 rounded-lg text-fg/70 hover:bg-fg/5 disabled:opacity-30"
                     >
                       <ChevronRight size={16} />
                     </button>
-                    <div className="w-px h-5 bg-black/10 mx-1" />
+                    <div className="w-px h-5 bg-fg/10 mx-1" />
                     <button
                       onClick={() => setScale((s) => Math.max(0.5, s - 0.15))}
-                      className="p-1.5 rounded-lg text-ink/60 hover:bg-black/5"
+                      className="p-1.5 rounded-lg text-fg/70 hover:bg-fg/5"
                     >
                       <ZoomOut size={16} />
                     </button>
                     <button
                       onClick={() => setScale((s) => Math.min(2.5, s + 0.15))}
-                      className="p-1.5 rounded-lg text-ink/60 hover:bg-black/5"
+                      className="p-1.5 rounded-lg text-fg/70 hover:bg-fg/5"
                     >
                       <ZoomIn size={16} />
                     </button>
-                    <div className="w-px h-5 bg-black/10 mx-1" />
+                    <div className="w-px h-5 bg-fg/10 mx-1" />
                   </>
                 )}
                 <button
                   onClick={onClose}
                   title="Close document"
                   aria-label="Close document"
-                  className="p-1.5 rounded-lg text-ink/60 hover:bg-black/5"
+                  className="p-1.5 rounded-lg text-fg/70 hover:bg-fg/5"
                 >
                   <X size={18} />
                 </button>
@@ -168,23 +169,23 @@ export function PdfViewerModal({ file, onClose }) {
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-auto bg-black/[0.04] flex items-start justify-center p-6 scrollbar-thin">
+            <div className="flex-1 overflow-auto bg-fg/[0.04] flex items-start justify-center p-6 scrollbar-thin">
               {status === "loading" && (
-                <div className="h-full flex flex-col items-center justify-center gap-3 text-ink/40">
+                <div className="h-full flex flex-col items-center justify-center gap-3 text-fg/55">
                   <Spinner size={24} />
                   <p className="text-sm">Loading document…</p>
                 </div>
               )}
               {status === "error" && (
                 <div className="h-full flex flex-col items-center justify-center text-center gap-3 px-6">
-                  <AlertTriangle size={22} className="text-danger-500" />
-                  <p className="font-medium text-ink">Couldn't load this document</p>
-                  <p className="text-sm text-ink/50 max-w-sm">
+                  <AlertTriangle size={22} className="text-danger" />
+                  <p className="font-medium text-fg">Couldn't load this document</p>
+                  <p className="text-sm text-fg/62 max-w-sm">
                     The file may be unavailable. Please try again.
                   </p>
                   <button
                     onClick={() => setLoadAttempt((attempt) => attempt + 1)}
-                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium bg-black/[0.04] text-ink hover:bg-black/[0.08] border border-black/10 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium bg-fg/[0.04] text-fg hover:bg-fg/[0.08] border border-fg/10 transition-colors"
                   >
                     <RotateCcw size={16} /> Try again
                   </button>

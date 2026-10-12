@@ -46,8 +46,8 @@ export default function AdviserRequests() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-white mb-1">Title requests</h1>
-      <p className="text-white/40 text-sm mb-7">
+      <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Title requests</h1>
+      <p className="text-fg/55 text-sm mb-7">
         Students awaiting your decision on their proposed capstone title.
       </p>
 
@@ -62,9 +62,9 @@ export default function AdviserRequests() {
               <LightCard className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                   <div>
-                    <p className="font-medium text-ink">{g.capstone_title}</p>
-                    <p className="text-xs text-ink/40 mt-0.5">
-                      {g.requested_by_detail?.student_profile?.full_name || g.requested_by_detail?.username} -{" "}
+                    <p className="font-medium text-fg">{g.capstone_title}</p>
+                    <p className="text-xs text-fg/55 mt-0.5">
+                      {g.requested_by_detail?.student_profile?.full_name || g.requested_by_detail?.email} -{" "}
                       {g.school_year_label || "No term set"}
                     </p>
                   </div>

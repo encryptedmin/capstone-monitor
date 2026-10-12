@@ -13,19 +13,17 @@ import {
   Spinner,
 } from "../../components/ui";
 
-const SEMESTERS = [
-  { value: 1, label: "1st Semester" },
-  { value: 2, label: "2nd Semester" },
-];
-
-function nextCapstoneTerm(startSemester, startYear) {
-  const semester = Number(startSemester);
+// A capstone term always runs Capstone 1 in the 2nd semester of the starting
+// AY and Capstone 2 in the 1st semester of the following AY.
+function capstoneTerms(startYear) {
   const year = Number(startYear);
-  if (semester === 2) {
-    return { semester: 1, year: year + 1 };
-  }
-  return { semester: 2, year };
+  return {
+    capstone1: { semester: 2, year },
+    capstone2: { semester: 1, year: year + 1 },
+  };
 }
+
+const ayLabel = (year) => `AY ${year}-${year + 1}`;
 
 export default function AdminSchoolYears() {
   const [years, setYears] = useState([]);
@@ -58,8 +56,8 @@ export default function AdminSchoolYears() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl text-white mb-1">School Years</h1>
-          <p className="text-white/40 text-sm">
+          <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">School Years</h1>
+          <p className="text-fg/55 text-sm">
             Capstone terms span two semesters across an academic-year boundary. The active term is
             what new registrations default to.
           </p>
@@ -79,13 +77,13 @@ export default function AdminSchoolYears() {
         </LightCard>
       ) : (
         <LightCard className="p-2">
-          <ul className="divide-y divide-black/[0.06]">
+          <ul className="divide-y divide-fg/[0.06]">
             {years.map((y) => (
               <li key={y.id} className="flex items-center justify-between gap-3 px-4 py-4">
                 <div>
-                  <p className="font-medium text-ink">{y.label}</p>
+                  <p className="font-medium text-fg">{y.label}</p>
                   {y.is_active && (
-                    <span className="inline-flex items-center gap-1 text-xs text-cyan-500 mt-0.5">
+                    <span className="inline-flex items-center gap-1 text-xs text-cyan mt-0.5">
                       <Star size={11} fill="currentColor" /> Active for registration
                     </span>
                   )}
@@ -114,45 +112,31 @@ export default function AdminSchoolYears() {
 }
 
 function AddTermModal({ open, onClose, onSaved }) {
-  const [startSemester, setStartSemester] = useState(2);
   const [startYear, setStartYear] = useState(new Date().getFullYear());
-  const [endSemester, setEndSemester] = useState(1);
-  const [endYear, setEndYear] = useState(new Date().getFullYear() + 1);
   const [saving, setSaving] = useState(false);
   const { push } = useToast();
 
-  useEffect(() => {
-    const next = nextCapstoneTerm(startSemester, startYear);
-    setEndSemester(next.semester);
-    setEndYear(next.year);
-  }, [startSemester, startYear]);
-
-  const reset = () => {
-    const year = new Date().getFullYear();
-    setStartSemester(2);
-    setStartYear(year);
-    const next = nextCapstoneTerm(2, year);
-    setEndSemester(next.semester);
-    setEndYear(next.year);
-  };
+  const yearValid = Number.isInteger(Number(startYear)) && Number(startYear) >= 2000 && Number(startYear) <= 2099;
+  const terms = yearValid ? capstoneTerms(startYear) : null;
 
   const handleClose = () => {
-    reset();
+    setStartYear(new Date().getFullYear());
     onClose();
   };
 
   const submit = async (e) => {
     e.preventDefault();
+    if (!terms) return;
     setSaving(true);
     try {
       await schoolYearsApi.create({
-        start_semester: Number(startSemester),
-        start_year: Number(startYear),
-        end_semester: Number(endSemester),
-        end_year: Number(endYear),
+        start_semester: terms.capstone1.semester,
+        start_year: terms.capstone1.year,
+        end_semester: terms.capstone2.semester,
+        end_year: terms.capstone2.year,
       });
       push("Capstone term added.", "success");
-      reset();
+      setStartYear(new Date().getFullYear());
       onSaved();
     } catch (err) {
       const data = err.response?.data;
@@ -166,44 +150,30 @@ function AddTermModal({ open, onClose, onSaved }) {
   return (
     <Modal open={open} onClose={handleClose} title="Add capstone term">
       <form onSubmit={submit}>
-        <p className="text-xs text-ink/50 mb-4">
-          Choose the starting semester. The continuation term is filled in automatically.
+        <p className="text-xs text-fg/62 mb-4">
+          Enter the academic year Capstone 1 starts in. Capstone 2 is set automatically to the
+          following academic year.
         </p>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Start semester">
-            <select className={inputClass} value={startSemester} onChange={(e) => setStartSemester(e.target.value)}>
-              {SEMESTERS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Start AY (e.g. 2026 for AY 2026-2027)">
-            <input
-              type="number"
-              className={inputClass}
-              value={startYear}
-              onChange={(e) => setStartYear(e.target.value)}
-              required
-            />
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="End semester">
-            <select className={`${inputClass} bg-black/[0.04]`} value={endSemester} disabled>
-              {SEMESTERS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="End AY (e.g. 2027 for AY 2027-2028)">
-            <input
-              type="number"
-              className={`${inputClass} bg-black/[0.04]`}
-              value={endYear}
-              readOnly
-              required
-            />
-          </Field>
+        <Field label="Capstone 1 starting AY (e.g. 2026 for AY 2026-2027)">
+          <input
+            type="number"
+            min="2000"
+            max="2099"
+            className={inputClass}
+            value={startYear}
+            onChange={(e) => setStartYear(e.target.value)}
+            required
+          />
+        </Field>
+        <div className="mt-4 mb-5 rounded-xl bg-fg/[0.05] ring-1 ring-inset ring-fg/10 px-4 py-3 text-sm text-fg space-y-1.5">
+          <p>
+            <span className="font-medium">Capstone 1:</span>{" "}
+            {terms ? `2nd Semester, ${ayLabel(terms.capstone1.year)}` : "—"}
+          </p>
+          <p>
+            <span className="font-medium">Capstone 2:</span>{" "}
+            {terms ? `1st Semester, ${ayLabel(terms.capstone2.year)}` : "—"}
+          </p>
         </div>
         <ModalActions onCancel={handleClose} submitLabel="Add term" loading={saving} />
       </form>

@@ -57,8 +57,8 @@ export default function AdminAdviserStatus() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl text-white mb-1">Adviser Status</h1>
-          <p className="text-white/40 text-sm">
+          <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Adviser Status</h1>
+          <p className="text-fg/55 text-sm">
             View adviser availability and the accepted capstone projects they currently handle.
           </p>
         </div>
@@ -66,10 +66,10 @@ export default function AdminAdviserStatus() {
           <label className="relative min-w-64">
             <CalendarRange
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/45"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg/58"
             />
             <select
-              className={`${inputClass} bg-white pl-9`}
+              className={`${inputClass} pl-9`}
               value={selectedSchoolYear}
               onChange={(event) => {
                 setSelectedSchoolYear(event.target.value);
@@ -102,17 +102,17 @@ export default function AdminAdviserStatus() {
         </LightCard>
       ) : (
         <LightCard className="overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr] gap-4 border-b border-black/[0.06] px-5 py-3 text-xs font-medium uppercase tracking-wide text-ink/40">
+          <div className="hidden md:grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr] gap-4 border-b border-fg/[0.06] px-5 py-3 text-xs font-medium uppercase tracking-wide text-fg/55">
             <span>Adviser</span>
             <span>Status</span>
             <span>Load</span>
             <span>Slots</span>
           </div>
 
-          <div className="divide-y divide-black/[0.06]">
+          <div className="divide-y divide-fg/[0.06]">
             {adviserRows.map((row) => {
               const isSelected = selectedAdviserId === row.adviser.id;
-              const name = row.adviser.adviser_profile?.full_name || row.adviser.username;
+              const name = row.adviser.adviser_profile?.full_name || row.adviser.email;
 
               return (
                 <button
@@ -120,22 +120,22 @@ export default function AdminAdviserStatus() {
                   type="button"
                   onClick={() => setSelectedAdviserId(row.adviser.id)}
                   className={`grid w-full gap-3 px-5 py-4 text-left transition-colors md:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr] md:items-center ${
-                    isSelected ? "bg-accent-500/10" : "hover:bg-black/[0.025]"
+                    isSelected ? "bg-accent-500/10" : "hover:bg-fg/[0.025]"
                   }`}
                 >
                   <div>
-                    <p className="font-medium text-ink">{name}</p>
-                    <p className="text-xs text-ink/40">
-                      {row.adviser.email || row.adviser.username}
+                    <p className="font-medium text-fg">{name}</p>
+                    <p className="text-xs text-fg/55">
+                      {row.adviser.email}
                       {!row.adviser.is_active ? " - Disabled account" : ""}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="md:hidden text-xs font-medium text-ink/40">Status</span>
+                    <span className="md:hidden text-xs font-medium text-fg/55">Status</span>
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                        row.isFull ? "bg-danger-100 text-danger-500" : "bg-cyan-100 text-cyan-500"
+                        row.isFull ? "bg-danger-500/15 text-danger" : "bg-cyan-500/15 text-cyan"
                       }`}
                     >
                       {row.isFull ? "Full" : "Available"}
@@ -143,15 +143,15 @@ export default function AdminAdviserStatus() {
                   </div>
 
                   <div>
-                    <p className="text-sm text-ink">
+                    <p className="text-sm text-fg">
                       {row.acceptedGroups.length} of {row.capacity}
                     </p>
-                    <p className="text-xs text-ink/40">accepted groups</p>
+                    <p className="text-xs text-fg/55">accepted groups</p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-ink">{row.slotsRemaining}</p>
-                    <p className="text-xs text-ink/40">remaining</p>
+                    <p className="text-sm text-fg">{row.slotsRemaining}</p>
+                    <p className="text-xs text-fg/55">remaining</p>
                   </div>
                 </button>
               );
@@ -166,7 +166,7 @@ export default function AdminAdviserStatus() {
 }
 
 function ProjectsModal({ row, onClose }) {
-  const name = row?.adviser.adviser_profile?.full_name || row?.adviser.username || "Adviser";
+  const name = row?.adviser.adviser_profile?.full_name || row?.adviser.email || "Adviser";
 
   return (
     <Modal open={!!row} onClose={onClose} title={`${name}'s capstone projects`} width="max-w-2xl">
@@ -175,13 +175,13 @@ function ProjectsModal({ row, onClose }) {
           {row.acceptedGroups.map((group) => (
             <li
               key={group.id}
-              className="rounded-lg border border-black/[0.06] bg-black/[0.025] px-4 py-3"
+              className="rounded-lg border border-fg/[0.06] bg-fg/[0.025] px-4 py-3"
             >
               <div className="flex items-start gap-3">
-                <FolderKanban size={18} className="mt-0.5 shrink-0 text-accent-500" />
+                <FolderKanban size={18} className="mt-0.5 shrink-0 text-accent" />
                 <div>
-                  <p className="font-medium text-ink">{group.capstone_title}</p>
-                  <p className="text-xs text-ink/45">
+                  <p className="font-medium text-fg">{group.capstone_title}</p>
+                  <p className="text-xs text-fg/58">
                     {group.school_year_label || "No term set"} - {group.member_count} member(s)
                   </p>
                 </div>

@@ -76,8 +76,8 @@ export default function StudentSubmissions() {
     <div>
       <div className="flex items-center justify-between mb-7">
         <div>
-          <h1 className="font-display text-2xl text-white mb-1">Submissions</h1>
-          <p className="text-white/40 text-sm">Upload your capstone documents for review.</p>
+          <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Submissions</h1>
+          <p className="text-fg/55 text-sm">Upload your capstone documents for review.</p>
         </div>
         {group && (
           <Button icon={Upload} onClick={() => setModalOpen(true)}>
@@ -106,8 +106,8 @@ export default function StudentSubmissions() {
               <LightCard className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
                   <div>
-                    <p className="font-medium text-ink">{s.milestone_title}</p>
-                    <p className="text-xs text-ink/40 mt-0.5">
+                    <p className="font-medium text-fg">{s.milestone_title}</p>
+                    <p className="text-xs text-fg/55 mt-0.5">
                       Submitted {formatDateTime(s.submitted_at)}
                     </p>
                   </div>
@@ -116,14 +116,14 @@ export default function StudentSubmissions() {
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setPreviewFile({ url: s.file, title: s.milestone_title })}
-                    className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
+                    className="inline-flex items-center gap-1.5 text-sm text-fg/70 hover:text-fg"
                   >
                     <Eye size={14} /> View submission
                   </button>
                   {(s.status === "rejected" || s.status === "revision_needed") && (
                     <button
                       onClick={() => setResubmitTarget(s)}
-                      className="inline-flex items-center gap-1.5 text-sm text-accent-500 hover:brightness-90"
+                      className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
                     >
                       <RefreshCw size={14} /> Resubmit
                     </button>
@@ -131,20 +131,20 @@ export default function StudentSubmissions() {
                 </div>
 
                 {s.resubmission_count > 0 && (
-                  <p className="flex items-center gap-1.5 text-xs text-ink/40 mt-2">
+                  <p className="flex items-center gap-1.5 text-xs text-fg/55 mt-2">
                     <History size={12} /> Resubmitted {s.resubmission_count}{" "}
                     {s.resubmission_count === 1 ? "time" : "times"}
                   </p>
                 )}
 
                 {s.feedback?.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-black/[0.06] space-y-3">
+                  <div className="mt-4 pt-4 border-t border-fg/[0.06] space-y-3">
                     {s.feedback.map((f) => (
                       <div key={f.id} className="flex gap-2.5">
-                        <MessageSquare size={15} className="text-accent-500 mt-0.5 shrink-0" />
+                        <MessageSquare size={15} className="text-accent mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-sm text-ink/80">{f.comment}</p>
-                          <p className="text-xs text-ink/35 mt-0.5">
+                          <p className="text-sm text-fg/80">{f.comment}</p>
+                          <p className="text-xs text-fg/50 mt-0.5">
                             {f.adviser_name} · {formatDateTime(f.created_at)}
                           </p>
                         </div>
@@ -232,7 +232,7 @@ function ResubmitModal({ submission, onClose, onSaved }) {
   return (
     <Modal open={!!submission} onClose={handleClose} title={`Resubmit · ${submission?.milestone_title ?? ""}`}>
       <form onSubmit={submit}>
-        <p className="text-sm text-ink/55 mb-4">
+        <p className="text-sm text-fg/66 mb-4">
           The new file replaces your previous upload. Your adviser will see it as pending review
           again.
         </p>

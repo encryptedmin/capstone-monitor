@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
@@ -34,49 +35,51 @@ function RootRedirect() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <Routes>
+              <Route path="/" element={<RootRedirect />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            <Route element={<ProtectedRoute roles={["student"]} />}>
-              <Route element={<AppShell />}>
-                <Route path="/student" element={<StudentDashboard />} />
-                <Route path="/student/adviser" element={<ChooseAdviser />} />
-                <Route path="/student/milestones" element={<StudentMilestones />} />
-                <Route path="/student/submissions" element={<StudentSubmissions />} />
-                <Route path="/student/announcements" element={<StudentAnnouncements />} />
+              <Route element={<ProtectedRoute roles={["student"]} />}>
+                <Route element={<AppShell />}>
+                  <Route path="/student" element={<StudentDashboard />} />
+                  <Route path="/student/adviser" element={<ChooseAdviser />} />
+                  <Route path="/student/milestones" element={<StudentMilestones />} />
+                  <Route path="/student/submissions" element={<StudentSubmissions />} />
+                  <Route path="/student/announcements" element={<StudentAnnouncements />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route element={<ProtectedRoute roles={["adviser"]} />}>
-              <Route element={<AppShell />}>
-                <Route path="/adviser" element={<AdviserDashboard />} />
-                <Route path="/adviser/requests" element={<AdviserRequests />} />
-                <Route path="/adviser/groups/:groupId" element={<AdviserGroupDetail />} />
+              <Route element={<ProtectedRoute roles={["adviser"]} />}>
+                <Route element={<AppShell />}>
+                  <Route path="/adviser" element={<AdviserDashboard />} />
+                  <Route path="/adviser/requests" element={<AdviserRequests />} />
+                  <Route path="/adviser/groups/:groupId" element={<AdviserGroupDetail />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route element={<ProtectedRoute roles={["admin"]} />}>
-              <Route path="/admin/report" element={<AdminPdfReport />} />
-              <Route element={<AppShell />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/groups" element={<AdminGroups />} />
-                <Route path="/admin/adviser-status" element={<AdminAdviserStatus />} />
-                <Route path="/admin/school-years" element={<AdminSchoolYears />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
-                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+              <Route element={<ProtectedRoute roles={["admin"]} />}>
+                <Route path="/admin/report" element={<AdminPdfReport />} />
+                <Route element={<AppShell />}>
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/users" element={<AdminUsers />} />
+                  <Route path="/admin/groups" element={<AdminGroups />} />
+                  <Route path="/admin/adviser-status" element={<AdminAdviserStatus />} />
+                  <Route path="/admin/school-years" element={<AdminSchoolYears />} />
+                  <Route path="/admin/settings" element={<AdminSettings />} />
+                  <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

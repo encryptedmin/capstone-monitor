@@ -24,8 +24,8 @@ export default function AdminAnnouncements() {
     <div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl text-white mb-1">Announcements</h1>
-          <p className="text-white/40 text-sm">Post department notices and share documentation templates.</p>
+          <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Announcements</h1>
+          <p className="text-fg/55 text-sm">Post department notices and share documentation templates.</p>
         </div>
       </div>
 
@@ -38,7 +38,7 @@ export default function AdminAnnouncements() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
-              tab === t.key ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80"
+              tab === t.key ? "bg-fg/15 text-fg" : "text-fg/62 hover:text-fg/80"
             }`}
           >
             {t.label}
@@ -103,11 +103,11 @@ function AnnouncementsTab() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    {a.is_pinned && <Pin size={13} className="text-accent-500" />}
-                    <p className="font-medium text-ink">{a.title}</p>
+                    {a.is_pinned && <Pin size={13} className="text-accent" />}
+                    <p className="font-medium text-fg">{a.title}</p>
                   </div>
-                  <p className="text-sm text-ink/60 whitespace-pre-wrap">{a.body}</p>
-                  <p className="text-xs text-ink/35 mt-2">
+                  <p className="text-sm text-fg/70 whitespace-pre-wrap">{a.body}</p>
+                  <p className="text-xs text-fg/50 mt-2">
                     {a.posted_by_name || "Admin"} · {formatDate(a.created_at)}
                   </p>
                 </div>
@@ -116,12 +116,12 @@ function AnnouncementsTab() {
                     onClick={() => togglePin(a)}
                     title={a.is_pinned ? "Unpin" : "Pin"}
                     className={`p-1.5 rounded-lg transition-colors ${
-                      a.is_pinned ? "text-accent-500" : "text-ink/30 hover:text-accent-500"
+                      a.is_pinned ? "text-accent" : "text-fg/45 hover:text-accent"
                     }`}
                   >
                     <Pin size={15} />
                   </button>
-                  <button onClick={() => remove(a.id)} className="p-1.5 rounded-lg text-ink/30 hover:text-danger-500">
+                  <button onClick={() => remove(a.id)} className="p-1.5 rounded-lg text-fg/45 hover:text-danger">
                     <Trash2 size={15} />
                   </button>
                 </div>
@@ -185,7 +185,7 @@ function PostAnnouncementModal({ open, onClose, onSaved }) {
         <Field label="Message">
           <textarea className={inputClass} rows={5} value={body} onChange={(e) => setBody(e.target.value)} required />
         </Field>
-        <label className="flex items-center gap-2 text-sm text-ink/60 mb-4 cursor-pointer select-none">
+        <label className="flex items-center gap-2 text-sm text-fg/70 mb-4 cursor-pointer select-none">
           <input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} />
           Pin to top
         </label>
@@ -239,19 +239,19 @@ function TemplatesTab() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((t) => (
             <LightCard key={t.id} className="p-5">
-              <FileBox size={18} className="text-accent-500 mb-3" />
-              <p className="font-medium text-ink mb-1">{t.title}</p>
-              {t.description && <p className="text-sm text-ink/55 mb-3">{t.description}</p>}
+              <FileBox size={18} className="text-accent mb-3" />
+              <p className="font-medium text-fg mb-1">{t.title}</p>
+              {t.description && <p className="text-sm text-fg/66 mb-3">{t.description}</p>}
               <div className="flex items-center justify-between">
                 <a
                   href={t.file}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-accent-500 hover:brightness-90"
+                  className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
                 >
                   <Download size={14} /> Download
                 </a>
-                <button onClick={() => remove(t.id)} className="text-ink/30 hover:text-danger-500">
+                <button onClick={() => remove(t.id)} className="text-fg/45 hover:text-danger">
                   <Trash2 size={15} />
                 </button>
               </div>

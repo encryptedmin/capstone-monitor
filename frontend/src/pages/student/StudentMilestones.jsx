@@ -24,8 +24,8 @@ export default function StudentMilestones() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-white mb-1">Milestones</h1>
-      <p className="text-white/40 text-sm mb-7">
+      <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Milestones</h1>
+      <p className="text-fg/55 text-sm mb-7">
         The checkpoints your adviser uses to track your capstone's progress, in order.
       </p>
 
@@ -45,23 +45,23 @@ export default function StudentMilestones() {
                 className="relative pl-12 pb-9 last:pb-0"
               >
                 {i < milestones.length - 1 && (
-                  <span className="absolute left-[15px] top-8 bottom-0 w-px bg-black/[0.08]" />
+                  <span className="absolute left-[15px] top-8 bottom-0 w-px bg-fg/[0.08]" />
                 )}
                 <span
                   className={`absolute left-0 top-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${
                     m.status === "completed"
                       ? "bg-cyan-500 text-white"
-                      : "bg-black/[0.06] text-ink/50"
+                      : "bg-fg/[0.06] text-fg/62"
                   }`}
                 >
                   {m.status === "completed" ? <Check size={15} /> : i + 1}
                 </span>
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 className="font-medium text-ink">{m.title}</h3>
+                  <h3 className="font-medium text-fg">{m.title}</h3>
                   <StatusBadge status={m.status} />
                 </div>
-                {m.description && <p className="text-sm text-ink/55 mb-1">{m.description}</p>}
-                <p className="text-xs text-ink/40">Due {formatDate(m.deadline)}</p>
+                {m.description && <p className="text-sm text-fg/66 mb-1">{m.description}</p>}
+                <p className="text-xs text-fg/55">Due {formatDate(m.deadline)}</p>
               </motion.li>
             ))}
           </ol>

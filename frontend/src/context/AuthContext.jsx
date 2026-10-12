@@ -14,6 +14,12 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await authApi.me();
+      // A session from before email-login has no `email`: drop it and sign in again.
+      if (!data?.email) {
+        tokenStore.clear();
+        setUser(null);
+        return;
+      }
       setUser(data);
     } catch {
       tokenStore.clear();
@@ -41,8 +47,8 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener("pagehide", handlePageHide);
   }, []);
 
-  const login = async (username, password) => {
-    const { data } = await authApi.login(username, password);
+  const login = async (email, password) => {
+    const { data } = await authApi.login(email, password);
     tokenStore.set(data.access, data.refresh);
     setUser(data.user);
     return data.user;

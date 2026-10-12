@@ -94,8 +94,8 @@ api.interceptors.response.use(
 // --- endpoint helpers ----------------------------------------------------
 
 export const authApi = {
-  login: (username, password) =>
-    api.post("/auth/login/", { username, password, device_id: tokenStore.deviceId }),
+  login: (email, password) =>
+    api.post("/auth/login/", { email, password, device_id: tokenStore.deviceId }),
   logout: (refresh) => api.post("/auth/logout/", { refresh }),
   register: (payload) => api.post("/auth/register/", payload),
   me: () => api.get("/auth/me/"),
