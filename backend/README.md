@@ -21,17 +21,20 @@ notifications endpoint** (`GET /api/notifications/?is_read=false`) rather
 than websockets — simpler to run and defend, and swappable for Django
 Channels later without changing any other code.
 
-## Setup
+## Setup (Windows)
 
-```bash
-python -m venv venv
-source venv/bin/activate        # venv\Scripts\activate on Windows
-pip install -r requirements.txt
+Install MySQL Server, Python, and Node.js. From the repository root, run
+`start system.bat`. On its first run, the launcher copies
+`backend/.env.example` to `backend/.env`; edit `DB_PASSWORD` (and any other
+MySQL connection values) there. The launcher creates the Python environment,
+installs missing dependencies, starts the configured local MySQL service,
+creates the database if needed, applies migrations, and opens the API and
+frontend in separate windows.
 
-python manage.py migrate
-python manage.py createsuperuser   # prompts for email + password; role is set to admin automatically
-python manage.py runserver
-```
+The MySQL user must be allowed to create the database on first run. After
+creation, it only needs access to that database. From the repository root,
+run Django commands with `backend/venv/Scripts/python.exe` and set the working
+directory to `backend`.
 
 The API is served at `http://127.0.0.1:8000/api/`. Django admin is at
 `/admin/` for quick data inspection.
@@ -58,33 +61,28 @@ rejected, across a past and the active term), milestones, submissions with
 adviser feedback, notifications, and announcements. All demo accounts use the
 password `Demo@12345` and log in with their email, e.g. `maria.santos@ck.edu` (adviser) or `juan.delacruz@student.ck.edu` (student).
 
-## Database: SQLite vs MySQL
+## Database: MySQL
 
-The project defaults to **SQLite** — zero setup, perfect for development and
-for a capstone demo/defense. Switch to **MySQL** for the actual ITE
-Department deployment by setting environment variables before running the
-server (no code changes needed):
+MySQL is the only configured database backend. Connection settings are read
+from `backend/.env` or the process environment:
 
-```bash
-export DB_ENGINE=mysql
-export DB_NAME=capstone_monitor
-export DB_USER=capstone_user
-export DB_PASSWORD=yourpassword
-export DB_HOST=localhost
-export DB_PORT=3306
+```dotenv
+DB_NAME=capstone_monitor
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_HOST=127.0.0.1
+DB_PORT=3306
 ```
 
-Then uncomment `mysqlclient` in `requirements.txt`, `pip install -r
-requirements.txt` again, and re-run `python manage.py migrate`.
+The startup script runs `python manage.py ensure_database` followed by
+`python manage.py migrate --noinput`. These migrations create the current
+application schema and include a MySQL-compatible active-login uniqueness
+rule.
 
-**Why MySQL for production:** the paper's own problem statement notes
-students tend to submit "only a day before the scheduled date" — i.e.
-submission and milestone-update traffic clusters right before deadlines.
-SQLite serializes all writes against a single file lock, which can cause
-contention or `database is locked` errors under exactly that kind of burst.
-MySQL (or PostgreSQL) handles concurrent writes properly and is the safer
-choice once this is running for the whole department rather than on one
-developer's machine.
+The previous local database file, if present, is not used or modified by the
+MySQL backend. `migrate` creates schema; it does not copy records from that
+file. Export/import any records you need to keep before retiring the old
+local database.
 
 ## API overview
 

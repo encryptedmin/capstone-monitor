@@ -80,7 +80,11 @@ class LogoutView(APIView):
             id=session_id,
             device_id=device_id,
             ended_at__isnull=True,
-        ).update(ended_at=timezone.now(), end_reason=LoginSession.END_LOGOUT)
+        ).update(
+            ended_at=timezone.now(),
+            end_reason=LoginSession.END_LOGOUT,
+            active_device_id=None,
+        )
 
 
 class RegisterView(generics.CreateAPIView):
@@ -219,6 +223,7 @@ class UserViewSet(viewsets.ModelViewSet):
             LoginSession.objects.filter(user=target, ended_at__isnull=True).update(
                 ended_at=timezone.now(),
                 end_reason=LoginSession.END_DISABLED,
+                active_device_id=None,
             )
         return Response(UserSerializer(target).data)
 

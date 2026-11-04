@@ -52,7 +52,7 @@ const ROLE_LABEL = { admin: "Administrator", adviser: "Faculty Adviser", student
 function Brand() {
   return (
     <div className="flex items-center gap-3 px-1">
-      <div className="h-10 w-10 rounded-xl bg-brand-gradient flex items-center justify-center shadow-[0_10px_24px_-8px_rgba(61,109,245,0.8),inset_0_1px_0_rgba(255,255,255,0.3)]">
+      <div className="h-10 w-10 rounded-xl bg-brand-gradient flex items-center justify-center shadow-[0_10px_24px_-8px_rgb(var(--brand-chroma-rgb)_/_0.8),inset_0_1px_0_rgba(255,255,255,0.3)]">
         <Cpu size={20} className="text-white" />
       </div>
       <div className="min-w-0">
@@ -77,7 +77,7 @@ function NavList({ nav, onNavigate, group }) {
               {isActive && (
                 <motion.span
                   layoutId={`${group}-pill`}
-                  className="absolute inset-0 rounded-xl bg-fg/[0.09] ring-1 ring-inset ring-fg/[0.12] shadow-[0_8px_24px_-12px_rgba(61,109,245,0.6)]"
+                  className="absolute inset-0 rounded-xl bg-fg/[0.09] ring-1 ring-inset ring-fg/[0.12] shadow-[0_8px_24px_-12px_rgb(var(--brand-chroma-rgb)_/_0.6)]"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}

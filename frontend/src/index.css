@@ -4,18 +4,18 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  /* Information Technology Education: deep circuit-board navy, electric-blue
-     accent with a violet partner, cyan "trace" highlight. Surfaces are
-     frosted glass floating over a slow aurora, in light and dark. */
+  /* Information Technology Education: deep circuit-board surfaces with a
+     theme-aware brand chroma effect. */
   --color-ink: #0b1220;
   --color-base-900: #0a1630;
   --color-base-800: #0f2248;
   --color-base-700: #163463;
   --color-base-600: #1f4a85;
 
-  /* Solid brand colors (same in both themes; use with white / dark text on top). */
+  /* Base brand colors; theme blocks below tune their appearance per mode. */
   --color-accent-500: #3d6df5;
   --color-accent-400: #6b95ff;
+  --color-brand-highlight: var(--brand-highlight);
   --color-violet-500: #7c5cfa;
   --color-cyan-500: #14b8c4;
   --color-danger-500: #e1544c;
@@ -52,30 +52,68 @@
 
 /* ---- Theme variables ------------------------------------------------------ */
 
-:root,
+:root:not([data-theme]),
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --fg: #e9eefc;
-  --surface-solid: #101a36;
-  --page-bg: #070d1f;
-  --blob-a: rgba(61, 109, 245, 0.34);
-  --blob-b: rgba(124, 92, 250, 0.26);
-  --blob-c: rgba(20, 184, 196, 0.2);
-  --glass-bg: rgba(255, 255, 255, 0.055);
-  --glass-strong: rgba(14, 22, 46, 0.84);
-  --glass-border: rgba(255, 255, 255, 0.11);
-  --glass-hover-border: rgba(255, 255, 255, 0.22);
-  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 48px -20px rgba(0, 0, 0, 0.65);
-  --glass-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 24px 56px -18px rgba(0, 0, 0, 0.75);
-  --scrim: rgba(3, 7, 18, 0.62);
-  --accent-text: #7ea6ff;
-  --cyan-text: #3dd9e4;
-  --danger-text: #ff8c84;
-  --grain-opacity: 0.05;
+  --color-ink: #07100a;
+  --color-base-900: #09150d;
+  --color-base-800: #102016;
+  --color-base-700: #183021;
+  --color-base-600: #25462f;
+  --color-accent-500: #008631;
+  --color-accent-400: #59d17b;
+  --color-cyan-500: #348b4e;
+  --color-violet-500: #80ae88;
+  --color-violet-700: #2e6d3c;
+  --color-fuchsia-500: #699374;
+  --color-fuchsia-700: #285b35;
+  --color-amber-400: #8f7b2d;
+  --color-orange-500: #8a633a;
+  --color-danger-500: #b65b50;
+  --color-danger-600: #973c32;
+  --brand-chroma-rgb: 0 134 49;
+  --tone-cyan-rgb: 52 139 78;
+  --tone-violet-rgb: 128 174 136;
+  --tone-amber-rgb: 143 123 45;
+  --brand-highlight: #278f49;
+  --brand-gradient-start: #008631;
+  --brand-gradient-end: #006f2b;
+  --brand-text-start: #59d17b;
+  --brand-text-mid: #91d4a2;
+  --brand-text-end: #b2dfba;
+  --fg: #e7f0e8;
+  --surface-solid: #102016;
+  --page-bg: #07100a;
+  --blob-a: rgba(0, 134, 49, 0.2);
+  --blob-b: rgba(0, 134, 49, 0.12);
+  --blob-c: rgba(71, 145, 89, 0.09);
+  --glass-bg: rgba(183, 214, 188, 0.045);
+  --glass-strong: rgba(14, 30, 19, 0.94);
+  --glass-border: rgba(148, 185, 155, 0.14);
+  --glass-hover-border: rgba(164, 210, 171, 0.27);
+  --glass-shadow: inset 0 1px 0 rgba(207, 234, 210, 0.045), 0 18px 48px -20px rgba(0, 0, 0, 0.62);
+  --glass-shadow-hover: inset 0 1px 0 rgba(207, 234, 210, 0.07), 0 24px 56px -18px rgba(0, 0, 0, 0.72);
+  --scrim: rgba(3, 10, 5, 0.72);
+  --accent-text: #75d990;
+  --cyan-text: #a3caaa;
+  --danger-text: #ed9b8e;
+  --grain-opacity: 0.035;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
+  --color-accent-500: #3d6df5;
+  --color-accent-400: #6b95ff;
+  --brand-chroma-rgb: 61 109 245;
+  --tone-cyan-rgb: 20 184 196;
+  --tone-violet-rgb: 124 92 250;
+  --tone-amber-rgb: 245 158 11;
+  --brand-highlight: #7c5cfa;
+  --brand-gradient-start: #3d6df5;
+  --brand-gradient-end: #7c5cfa;
+  --brand-text-start: #6b95ff;
+  --brand-text-mid: #7c5cfa;
+  --brand-text-end: #14b8c4;
   --fg: #0f1a33;
   --surface-solid: #ffffff;
   --page-bg: #eaf0fb;
@@ -251,14 +289,14 @@
   }
 
   .text-gradient {
-    background-image: linear-gradient(120deg, var(--color-accent-400), var(--color-violet-500) 55%, var(--color-cyan-500));
+    background-image: linear-gradient(120deg, var(--brand-text-start), var(--brand-text-mid) 55%, var(--brand-text-end));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .bg-brand-gradient {
-    background-image: linear-gradient(135deg, var(--color-accent-500), var(--color-violet-500));
+    background-image: linear-gradient(135deg, var(--brand-gradient-start), var(--brand-gradient-end));
   }
 
   .skeleton {

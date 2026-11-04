@@ -15,8 +15,13 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Local secrets and database settings live outside source control.
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -87,33 +92,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-#
-# Defaults to SQLite for local development/demo -- zero setup required.
-# For the deployed ITE Department instance, set DB_ENGINE=mysql plus the
-# DB_* environment variables below (see README.md) to switch to MySQL
-# without touching any application code.
-
-if os.environ.get("DB_ENGINE") == "mysql":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.environ.get("DB_NAME", "capstone_monitor"),
-            "USER": os.environ.get("DB_USER", "root"),
-            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-            "HOST": os.environ.get("DB_HOST", "localhost"),
-            "PORT": os.environ.get("DB_PORT", "3306"),
-            "OPTIONS": {"charset": "utf8mb4"},
-        }
+# MySQL is the only supported database backend. Missing or incorrect
+# connection settings fail at startup instead of silently creating a local DB.
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("DB_NAME", "capstone_monitor"),
+        "USER": os.environ.get("DB_USER", "root"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+        "HOST": os.environ.get("DB_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
+        "OPTIONS": {"charset": "utf8mb4"},
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
 
 AUTH_USER_MODEL = "accounts.User"
 

@@ -7,7 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 
 const VARIANTS = {
   primary:
-    "bg-brand-gradient text-white hover:brightness-110 shadow-[0_10px_28px_-10px_rgba(61,109,245,0.75),inset_0_1px_0_rgba(255,255,255,0.25)]",
+    "bg-brand-gradient text-white hover:brightness-110 shadow-[0_10px_28px_-10px_rgb(var(--brand-chroma-rgb)_/_0.75),inset_0_1px_0_rgba(255,255,255,0.25)]",
   ghost: "bg-fg/[0.07] text-fg hover:bg-fg/[0.12] border border-fg/[0.12] backdrop-blur-md",
   ghostLight: "bg-fg/[0.05] text-fg hover:bg-fg/[0.1] border border-fg/10",
   danger:
@@ -170,10 +170,10 @@ export function PageHeader({ eyebrow, title, description, actions }) {
 }
 
 const TONES = {
-  accent: "from-accent-500 to-violet-500 shadow-[0_10px_24px_-8px_rgba(61,109,245,0.7)]",
-  cyan: "from-cyan-500 to-accent-500 shadow-[0_10px_24px_-8px_rgba(20,184,196,0.7)]",
-  violet: "from-violet-500 to-fuchsia-500 shadow-[0_10px_24px_-8px_rgba(124,92,250,0.7)]",
-  amber: "from-amber-400 to-orange-500 shadow-[0_10px_24px_-8px_rgba(245,158,11,0.7)]",
+  accent: "from-accent-500 to-brand-highlight shadow-[0_10px_24px_-8px_rgb(var(--brand-chroma-rgb)_/_0.7)]",
+  cyan: "from-cyan-500 to-accent-500 shadow-[0_10px_24px_-8px_rgb(var(--tone-cyan-rgb)_/_0.7)]",
+  violet: "from-violet-500 to-fuchsia-500 dark:from-violet-700 dark:to-fuchsia-700 shadow-[0_10px_24px_-8px_rgb(var(--tone-violet-rgb)_/_0.7)]",
+  amber: "from-amber-400 to-orange-500 shadow-[0_10px_24px_-8px_rgb(var(--tone-amber-rgb)_/_0.7)]",
 };
 
 export function StatCard({ icon: Icon, label, value, tone = "accent", hint }) {
@@ -396,7 +396,7 @@ export function Avatar({ name = "?", size = 36, className = "" }) {
       aria-hidden
       style={{ width: size, height: size, fontSize: size * 0.38 }}
       className={`flex shrink-0 items-center justify-center rounded-full bg-brand-gradient font-medium text-white
-        shadow-[0_6px_16px_-6px_rgba(61,109,245,0.8)] ring-2 ring-fg/10 ${className}`}
+        shadow-[0_6px_16px_-6px_rgb(var(--brand-chroma-rgb)_/_0.8)] ring-2 ring-fg/10 ${className}`}
     >
       {initials || "?"}
     </div>

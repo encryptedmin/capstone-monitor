@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db import transaction
 from django.utils import timezone
 
 from .names import name_key
@@ -203,6 +203,9 @@ class LoginSession(models.Model):
         User, on_delete=models.CASCADE, related_name="login_sessions"
     )
     device_id = models.CharField(max_length=64, db_index=True)
+    active_device_id = models.CharField(
+        max_length=64, unique=True, null=True, blank=True, editable=False
+    )
     server_instance_id = models.CharField(max_length=32, db_index=True)
     user_agent = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -212,13 +215,6 @@ class LoginSession(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["device_id"],
-                condition=Q(ended_at__isnull=True),
-                name="one_active_login_per_device",
-            )
-        ]
         indexes = [
             models.Index(fields=["user", "device_id", "ended_at"]),
             models.Index(fields=["server_instance_id", "ended_at"]),
@@ -234,22 +230,26 @@ class LoginSession(models.Model):
     @classmethod
     def start(cls, user, device_id, user_agent=""):
         now = timezone.now()
-        cls.objects.filter(device_id=device_id, ended_at__isnull=True).update(
-            ended_at=now,
-            end_reason=cls.END_REPLACED,
-        )
-        return cls.objects.create(
-            user=user,
-            device_id=device_id,
-            server_instance_id=settings.SESSION_SERVER_INSTANCE_ID,
-            user_agent=user_agent[:255],
-        )
+        with transaction.atomic():
+            cls.objects.filter(active_device_id=device_id).update(
+                ended_at=now,
+                end_reason=cls.END_REPLACED,
+                active_device_id=None,
+            )
+            return cls.objects.create(
+                user=user,
+                device_id=device_id,
+                active_device_id=device_id,
+                server_instance_id=settings.SESSION_SERVER_INSTANCE_ID,
+                user_agent=user_agent[:255],
+            )
 
     def end(self, reason=END_LOGOUT):
         if self.ended_at is None:
             self.ended_at = timezone.now()
             self.end_reason = reason
-            self.save(update_fields=["ended_at", "end_reason"])
+            self.active_device_id = None
+            self.save(update_fields=["ended_at", "end_reason", "active_device_id"])
 
     def touch(self):
         self.last_seen_at = timezone.now()

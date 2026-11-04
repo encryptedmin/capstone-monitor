@@ -58,7 +58,7 @@ export default function LoginPage() {
         {/* Brand / pitch (desktop) */}
         <div className="hidden lg:block">
           <motion.div variants={item} className="flex items-center gap-3 mb-8">
-            <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-[0_14px_32px_-8px_rgba(61,109,245,0.8),inset_0_1px_0_rgba(255,255,255,0.3)]">
+            <div className="h-12 w-12 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-[0_14px_32px_-8px_rgb(var(--brand-chroma-rgb)_/_0.8),inset_0_1px_0_rgba(255,255,255,0.3)]">
               <Cpu size={24} className="text-white" />
             </div>
             <p className="text-sm text-fg/60">Information Technology Education</p>
@@ -91,7 +91,7 @@ export default function LoginPage() {
         {/* Sign-in card */}
         <div className="w-full max-w-md mx-auto">
           <motion.div variants={item} className="flex flex-col items-center mb-7 lg:hidden">
-            <div className="h-14 w-14 rounded-2xl bg-brand-gradient flex items-center justify-center mb-4 shadow-[0_14px_32px_-8px_rgba(61,109,245,0.8),inset_0_1px_0_rgba(255,255,255,0.3)]">
+            <div className="h-14 w-14 rounded-2xl bg-brand-gradient flex items-center justify-center mb-4 shadow-[0_14px_32px_-8px_rgb(var(--brand-chroma-rgb)_/_0.8),inset_0_1px_0_rgba(255,255,255,0.3)]">
               <Cpu size={26} className="text-white" />
             </div>
             <h1 className="font-display text-2xl font-semibold text-fg text-center">
