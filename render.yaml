@@ -7,7 +7,7 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     # Free Render services do not have a pre-deploy command, so apply
-    # migrations during startup. Create the managed database schema first.
+    # migrations during startup. Create the Aiven database schema first.
     startCommand: python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: DJANGO_SECRET_KEY
@@ -25,11 +25,13 @@ services:
       - key: DB_PASSWORD
         sync: false
       - key: DB_HOST
-        sync: false
+        value: mysql-3b48df12-digitalfortress20-a405.b.aivencloud.com
       - key: DB_PORT
-        value: "4000"
+        sync: false
       - key: DB_SSL_MODE
         value: VERIFY_IDENTITY
+      - key: DB_SSL_CA
+        value: /etc/secrets/aiven-ca.pem
 
   - type: web
     name: capstone-monitor-frontend

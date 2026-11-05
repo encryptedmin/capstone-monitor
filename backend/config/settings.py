@@ -15,6 +15,7 @@ import uuid
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -96,8 +97,16 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # connection settings fail at startup instead of silently creating a local DB.
 database_options = {"charset": "utf8mb4"}
 db_ssl_mode = os.environ.get("DB_SSL_MODE", "").strip()
+db_ssl_ca = os.environ.get("DB_SSL_CA", "").strip()
 if db_ssl_mode:
     database_options["ssl_mode"] = db_ssl_mode
+if db_ssl_ca:
+    database_options["ssl"] = {"ca": db_ssl_ca}
+if db_ssl_mode.upper() in {"VERIFY_CA", "VERIFY_IDENTITY"} and not db_ssl_ca:
+    raise ImproperlyConfigured(
+        "DB_SSL_CA must point to the database provider's CA certificate when "
+        "DB_SSL_MODE is VERIFY_CA or VERIFY_IDENTITY."
+    )
 
 DATABASES = {
     "default": {

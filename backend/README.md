@@ -39,21 +39,50 @@ directory to `backend`.
 ## Render proof-of-concept deployment
 
 Render does not provide a managed MySQL service. The root `render.yaml`
-Blueprint deploys the API and Vite frontend to Render and expects an external
-managed MySQL-compatible database, such as TiDB Cloud Starter.
+Blueprint deploys the API and Vite frontend to Render and connects the API to
+the Aiven for MySQL service configured below.
 
-Before applying the Blueprint:
+Before deploying the Blueprint:
 
-1. Create a MySQL-compatible managed database and a schema named
-   `capstone_monitor`.
-2. Create an application database user with access to that schema. For TiDB,
-   use the full instance-prefixed username shown in its connection details.
-3. In the Render Blueprint prompts, enter that database user's username and
-   password plus the provider's host. `DB_PORT` defaults to `4000` for TiDB;
-   change it if your provider specifies a different port.
-4. Allow the Render API service's outbound IP ranges in the database provider's
-   network settings. The API is configured to require verified TLS via
-   `DB_SSL_MODE=VERIFY_IDENTITY`.
+1. In Aiven, confirm the MySQL service is running. Create a database named
+   `capstone_monitor` under the service's **Connect → Databases** page.
+2. Get the hostname, port, username, and password from Aiven's connection
+   information. The configured hostname is
+   `mysql-3b48df12-digitalfortress20-a405.b.aivencloud.com`; use the port shown
+   by Aiven because it is not necessarily `3306`.
+3. Download the Aiven project CA certificate from the service's Overview page.
+   In Render, open the API service's **Environment** page and add a secret file
+   named `aiven-ca.pem` containing the certificate. Render exposes it to the
+   service at `/etc/secrets/aiven-ca.pem`.
+4. Set the API service environment variables listed below. The Aiven database
+   user needs permission to create and alter tables in `capstone_monitor` so
+   Django can apply migrations.
+5. In Render, open the API service's **Connect → Outbound** tab and copy its
+   outbound IP ranges. Add those ranges to Aiven's MySQL service IP allowlist
+   if you have restricted inbound access. Aiven's default IP filter permits
+   all sources; avoid removing that rule until Render's ranges are added.
+6. Deploy the API. Its start command runs Django migrations before Gunicorn.
+
+Render API environment variables:
+
+| Key | Value |
+|---|---|
+| `DJANGO_SECRET_KEY` | Generate a long random secret; the Blueprint generates one |
+| `DJANGO_DEBUG` | `False` |
+| `DJANGO_ALLOWED_HOSTS` | `capstone-monitor-api.onrender.com` (replace if the service URL differs) |
+| `CORS_ALLOWED_ORIGINS` | `https://capstone-monitor-frontend.onrender.com` (replace if the frontend URL differs) |
+| `DB_NAME` | `capstone_monitor` |
+| `DB_USER` | Aiven MySQL username |
+| `DB_PASSWORD` | Password for that Aiven user |
+| `DB_HOST` | `mysql-3b48df12-digitalfortress20-a405.b.aivencloud.com` |
+| `DB_PORT` | Port shown in Aiven connection information |
+| `DB_SSL_MODE` | `VERIFY_IDENTITY` |
+| `DB_SSL_CA` | `/etc/secrets/aiven-ca.pem` |
+
+If you created the Render service manually instead of from the Blueprint, set
+the API service's Root Directory to `backend`, Build Command to
+`pip install -r requirements.txt`, and Start Command to
+`python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`.
 
 The Blueprint runs Django migrations before starting the API. Its free plan
 uses the start command for migrations because Render pre-deploy commands are
@@ -101,6 +130,8 @@ DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_HOST=127.0.0.1
 DB_PORT=3306
+DB_SSL_MODE=
+DB_SSL_CA=
 ```
 
 The startup script runs `python manage.py ensure_database` followed by

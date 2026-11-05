@@ -27,6 +27,8 @@ class Command(BaseCommand):
         }
         if driver_options.get("ssl_mode"):
             connect_options["ssl_mode"] = driver_options["ssl_mode"]
+        if driver_options.get("ssl"):
+            connect_options["ssl"] = driver_options["ssl"]
 
         try:
             connection = Database.connect(**connect_options)
