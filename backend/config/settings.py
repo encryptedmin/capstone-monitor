@@ -55,11 +55,14 @@ render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
 if render_hostname and render_hostname not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_hostname)
 
-FRONTEND_URL = os.environ.get(
-    "FRONTEND_URL", "http://127.0.0.1:5173/"
-).strip()
+default_frontend_url = (
+    "https://capstone-monitor-frontend.onrender.com/"
+    if running_on_render
+    else "http://127.0.0.1:5173/"
+)
+FRONTEND_URL = os.environ.get("FRONTEND_URL", default_frontend_url).strip()
 if not FRONTEND_URL:
-    FRONTEND_URL = "http://127.0.0.1:5173/"
+    FRONTEND_URL = default_frontend_url
 elif not FRONTEND_URL.endswith("/"):
     FRONTEND_URL += "/"
 

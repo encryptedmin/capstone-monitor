@@ -45,6 +45,8 @@ service is named `capstone-monitor`, matching its existing
 `capstone-monitor.onrender.com` hostname; the static frontend is served at
 `capstone-monitor-frontend.onrender.com`. Opening the API hostname at `/`
 redirects to the frontend. API endpoints remain under `/api/`.
+The production default for `FRONTEND_URL` uses the static site's configured
+hostname, so a manually configured API service also redirects correctly.
 
 Before deploying the Blueprint:
 
