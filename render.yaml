@@ -1,6 +1,8 @@
 services:
   - type: web
-    name: capstone-monitor-api
+    # Match the existing API service's Render hostname so Blueprint syncs
+    # its configuration instead of creating a second API service.
+    name: capstone-monitor
     runtime: python
     plan: free
     region: singapore
@@ -18,6 +20,8 @@ services:
         value: capstone-monitor.onrender.com
       - key: CORS_ALLOWED_ORIGINS
         value: https://capstone-monitor-frontend.onrender.com
+      - key: FRONTEND_URL
+        value: https://capstone-monitor-frontend.onrender.com/
       - key: DB_NAME
         value: capstone_monitor
       - key: DB_USER

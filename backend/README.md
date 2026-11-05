@@ -39,8 +39,12 @@ directory to `backend`.
 ## Render proof-of-concept deployment
 
 Render does not provide a managed MySQL service. The root `render.yaml`
-Blueprint deploys the API and Vite frontend to Render and connects the API to
-the Aiven for MySQL service configured below.
+Blueprint deploys the API and Vite frontend as separate Render services and
+connects the API to the Aiven for MySQL service configured below. The API
+service is named `capstone-monitor`, matching its existing
+`capstone-monitor.onrender.com` hostname; the static frontend is served at
+`capstone-monitor-frontend.onrender.com`. Opening the API hostname at `/`
+redirects to the frontend. API endpoints remain under `/api/`.
 
 Before deploying the Blueprint:
 
@@ -79,10 +83,17 @@ Render API environment variables:
 | `DB_SSL_MODE` | `VERIFY_IDENTITY` |
 | `DB_SSL_CA` | `/etc/secrets/aiven-ca.pem` |
 
-If you created the Render service manually instead of from the Blueprint, set
-the API service's Root Directory to `backend`, Build Command to
-`pip install -r requirements.txt`, and Start Command to
+If you created the API service manually instead of from the Blueprint, set its
+Root Directory to `backend`, Build Command to `pip install -r requirements.txt`,
+and Start Command to
 `python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`.
+You must also create a separate Render Static Site for `frontend` (Root
+Directory `frontend`, Build Command `npm ci && npm run build`, Publish Directory
+`dist`, and rewrite `/*` to `/index.html`). Set its `VITE_API_URL` to
+`https://capstone-monitor.onrender.com/api` and set the API's
+`CORS_ALLOWED_ORIGINS` and `FRONTEND_URL` to the static site's assigned URL.
+Deploying a manually created API service alone does not create the frontend
+service.
 
 The Blueprint runs Django migrations before starting the API. Its free plan
 uses the start command for migrations because Render pre-deploy commands are
