@@ -1,0 +1,13 @@
+.git
+.gitignore
+**/.env
+**/.env.*
+accounts.txt
+**/__pycache__/
+**/*.py[cod]
+backend/venv/
+backend/media/
+backend/staticfiles/
+backend/frontend_dist/
+frontend/node_modules/
+frontend/dist/

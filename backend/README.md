@@ -39,16 +39,12 @@ directory to `backend`.
 ## Render proof-of-concept deployment
 
 Render does not provide a managed MySQL service. The root `render.yaml`
-Blueprint deploys the API and Vite frontend as separate Render services and
-connects the API to the Aiven for MySQL service configured below. The API
-service is named `capstone-monitor`, matching its existing
-`capstone-monitor.onrender.com` hostname; the static frontend is served at
-`capstone-monitor-frontend.onrender.com`. Opening the API hostname at `/`
-redirects to the frontend. API endpoints remain under `/api/`.
-The production default for `FRONTEND_URL` uses the static site's configured
-hostname, so a manually configured API service also redirects correctly.
+defines **one Docker Web Service** named `capstone-monitor`. Its Docker build
+compiles the React/Vite frontend and packages it with Django, so the UI and API
+share one Render service and hostname. The frontend opens at `/`, the API is
+under `/api/`, and Django admin is under `/django-admin/`.
 
-Before deploying the Blueprint:
+Before deploying:
 
 1. In Aiven, confirm the MySQL service is running. Create a database named
    `capstone_monitor` under the service's **Connect → Databases** page.
@@ -57,26 +53,26 @@ Before deploying the Blueprint:
    `mysql-3b48df12-digitalfortress20-a405.b.aivencloud.com`; use the port shown
    by Aiven because it is not necessarily `3306`.
 3. Download the Aiven project CA certificate from the service's Overview page.
-   In Render, open the API service's **Environment** page and add a secret file
-   named `aiven-ca.pem` containing the certificate. Render exposes it to the
-   service at `/etc/secrets/aiven-ca.pem`.
-4. Set the API service environment variables listed below. The Aiven database
+   In Render, open the `capstone-monitor` service's **Environment** page and
+   add a secret file named `aiven-ca.pem` containing the certificate. Render
+   exposes it to the service at `/etc/secrets/aiven-ca.pem`.
+4. Set the service environment variables listed below. The Aiven database
    user needs permission to create and alter tables in `capstone_monitor` so
    Django can apply migrations.
-5. In Render, open the API service's **Connect → Outbound** tab and copy its
+5. In Render, open the service's **Connect → Outbound** tab and copy its
    outbound IP ranges. Add those ranges to Aiven's MySQL service IP allowlist
    if you have restricted inbound access. Aiven's default IP filter permits
    all sources; avoid removing that rule until Render's ranges are added.
-6. Deploy the API. Its start command runs Django migrations before Gunicorn.
+6. Deploy the Blueprint. Review that it updates the existing `capstone-monitor`
+   service and defines only that one service. Do not add a separate Static Site.
 
-Render API environment variables:
+Render environment variables:
 
 | Key | Value |
 |---|---|
 | `DJANGO_SECRET_KEY` | Generate a long random secret; the Blueprint generates one |
 | `DJANGO_DEBUG` | `False` |
 | `DJANGO_ALLOWED_HOSTS` | `capstone-monitor.onrender.com` (replace if the service URL differs; Render's assigned hostname is also added automatically) |
-| `CORS_ALLOWED_ORIGINS` | `https://capstone-monitor-frontend.onrender.com` (replace if the frontend URL differs) |
 | `DB_NAME` | `capstone_monitor` |
 | `DB_USER` | Aiven MySQL username |
 | `DB_PASSWORD` | Password for that Aiven user |
@@ -85,30 +81,18 @@ Render API environment variables:
 | `DB_SSL_MODE` | `VERIFY_IDENTITY` |
 | `DB_SSL_CA` | `/etc/secrets/aiven-ca.pem` |
 
-If you created the API service manually instead of from the Blueprint, set its
-Root Directory to `backend`, Build Command to `pip install -r requirements.txt`,
-and Start Command to
-`python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`.
-You must also create a separate Render Static Site for `frontend` (Root
-Directory `frontend`, Build Command `npm ci && npm run build`, Publish Directory
-`dist`, and rewrite `/*` to `/index.html`). Set its `VITE_API_URL` to
-`https://capstone-monitor.onrender.com/api` and set the API's
-`CORS_ALLOWED_ORIGINS` and `FRONTEND_URL` to the static site's assigned URL.
-Deploying a manually created API service alone does not create the frontend
-service.
+If configuring the existing service manually, set its runtime to **Docker**,
+Dockerfile path to `./Dockerfile`, and Docker context to the repository root.
+Do not set a subdirectory as its root directory. The Dockerfile builds the
+frontend, runs `collectstatic`, applies Django migrations before startup, and
+starts Gunicorn. Create the Aiven database before the first deploy.
 
-The Blueprint runs Django migrations before starting the API. Its free plan
-uses the start command for migrations because Render pre-deploy commands are
-not available on free web services. Create the database schema before the
-first deploy; the app user does not need permission to create databases.
-
-The frontend is published as a Render static site and points to the API's
-`onrender.com` address. Render's free API service can sleep when idle, and this
-project currently stores uploaded media on the backend filesystem; uploaded
-files need external object storage before relying on them across restarts.
+Render's free service can sleep when idle, and uploaded media is stored on the
+service's ephemeral filesystem. Use external object storage before relying on
+uploads across restarts.
 
 The API is served at `http://127.0.0.1:8000/api/`. Django admin is at
-`/admin/` for quick data inspection.
+`/django-admin/` for quick data inspection.
 
 Creating the very first admin account needs the Django shell once, since
 account creation is admin-gated by design (only the Administrator's "Create

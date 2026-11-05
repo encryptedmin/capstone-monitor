@@ -55,18 +55,6 @@ render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
 if render_hostname and render_hostname not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_hostname)
 
-default_frontend_url = (
-    "https://capstone-monitor-frontend.onrender.com/"
-    if running_on_render
-    else "http://127.0.0.1:5173/"
-)
-FRONTEND_URL = os.environ.get("FRONTEND_URL", default_frontend_url).strip()
-if not FRONTEND_URL:
-    FRONTEND_URL = default_frontend_url
-elif not FRONTEND_URL.endswith("/"):
-    FRONTEND_URL += "/"
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -91,6 +79,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -186,7 +175,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+FRONTEND_BUILD_DIR = BASE_DIR / "frontend_dist"
+STATICFILES_DIRS = (
+    [("frontend", FRONTEND_BUILD_DIR)] if FRONTEND_BUILD_DIR.is_dir() else []
+)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
 # Media files (student submission uploads)
 MEDIA_URL = "media/"

@@ -21,9 +21,10 @@ cp .env.example .env   # already done for you; edit if your API runs elsewhere
 npm run dev
 ```
 
-The app runs at `http://localhost:5173` and expects the Django backend at
-`http://127.0.0.1:8000/api` (set in `.env` via `VITE_API_URL`). The backend's
-CORS settings already allow this origin by default.
+The app runs at `http://localhost:5173`. By default, Vite proxies `/api` and
+`/media` to Django at `http://127.0.0.1:8000`; set `VITE_API_URL` only when you
+need to use a different API address. In the Render deployment, Django serves
+the built frontend and API from the same hostname.
 
 Log in with the admin account you created in the backend's setup step, then
 use **Users** to create adviser/student accounts and **Capstone Groups** to
@@ -53,6 +54,5 @@ src/
   (`GET /api/notifications/?is_read=false` every 20s) rather than
   websockets — simpler to run, and swappable for a websocket connection
   later without touching any other component.
-- `npm run build` produces a static `dist/` you can deploy to any static
-  host (Netlify, Nginx, etc.) — just point `VITE_API_URL` at your deployed
-  Django API before building.
+- `npm run build` produces the `dist/` bundle used by the root Dockerfile
+  for the single-service Render deployment.
