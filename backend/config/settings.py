@@ -94,10 +94,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # MySQL is the only supported database backend. Missing or incorrect
 # connection settings fail at startup instead of silently creating a local DB.
-database_options = {"charset": "utf8mb4"}
-db_ssl_mode = os.environ.get("DB_SSL_MODE", "").strip()
-if db_ssl_mode:
-    database_options["ssl_mode"] = db_ssl_mode
+# MySQL database configuration
+database_options = {
+    "charset": "utf8mb4",
+    "ssl_mode": os.environ.get("DB_SSL_MODE", "REQUIRED").strip().upper(),
+}
 
 DATABASES = {
     "default": {
