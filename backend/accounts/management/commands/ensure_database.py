@@ -17,15 +17,19 @@ class Command(BaseCommand):
             raise CommandError("DB_NAME must contain between 1 and 64 characters.")
 
         driver_options = config.get("OPTIONS", {})
+        connect_options = {
+            "host": config["HOST"],
+            "user": config["USER"],
+            "passwd": config["PASSWORD"],
+            "port": int(config["PORT"] or 3306),
+            "charset": driver_options.get("charset", "utf8mb4"),
+            "connect_timeout": 10,
+        }
+        if driver_options.get("ssl_mode"):
+            connect_options["ssl_mode"] = driver_options["ssl_mode"]
+
         try:
-            connection = Database.connect(
-                host=config["HOST"],
-                user=config["USER"],
-                passwd=config["PASSWORD"],
-                port=int(config["PORT"] or 3306),
-                charset=driver_options.get("charset", "utf8mb4"),
-                connect_timeout=10,
-            )
+            connection = Database.connect(**connect_options)
         except Database.Error as exc:
             raise CommandError(
                 f"Could not connect to MySQL ({exc}). Check that the server is "

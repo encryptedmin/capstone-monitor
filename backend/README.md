@@ -36,6 +36,35 @@ creation, it only needs access to that database. From the repository root,
 run Django commands with `backend/venv/Scripts/python.exe` and set the working
 directory to `backend`.
 
+## Render proof-of-concept deployment
+
+Render does not provide a managed MySQL service. The root `render.yaml`
+Blueprint deploys the API and Vite frontend to Render and expects an external
+managed MySQL-compatible database, such as TiDB Cloud Starter.
+
+Before applying the Blueprint:
+
+1. Create a MySQL-compatible managed database and a schema named
+   `capstone_monitor`.
+2. Create an application database user with access to that schema. For TiDB,
+   use the full instance-prefixed username shown in its connection details.
+3. In the Render Blueprint prompts, enter that database user's username and
+   password plus the provider's host. `DB_PORT` defaults to `4000` for TiDB;
+   change it if your provider specifies a different port.
+4. Allow the Render API service's outbound IP ranges in the database provider's
+   network settings. The API is configured to require verified TLS via
+   `DB_SSL_MODE=VERIFY_IDENTITY`.
+
+The Blueprint runs Django migrations before starting the API. Its free plan
+uses the start command for migrations because Render pre-deploy commands are
+not available on free web services. Create the database schema before the
+first deploy; the app user does not need permission to create databases.
+
+The frontend is published as a Render static site and points to the API's
+`onrender.com` address. Render's free API service can sleep when idle, and this
+project currently stores uploaded media on the backend filesystem; uploaded
+files need external object storage before relying on them across restarts.
+
 The API is served at `http://127.0.0.1:8000/api/`. Django admin is at
 `/admin/` for quick data inspection.
 

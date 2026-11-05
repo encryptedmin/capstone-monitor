@@ -94,6 +94,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # MySQL is the only supported database backend. Missing or incorrect
 # connection settings fail at startup instead of silently creating a local DB.
+database_options = {"charset": "utf8mb4"}
+db_ssl_mode = os.environ.get("DB_SSL_MODE", "").strip()
+if db_ssl_mode:
+    database_options["ssl_mode"] = db_ssl_mode
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -102,7 +107,7 @@ DATABASES = {
         "PASSWORD": os.environ.get("DB_PASSWORD", ""),
         "HOST": os.environ.get("DB_HOST", "127.0.0.1"),
         "PORT": os.environ.get("DB_PORT", "3306"),
-        "OPTIONS": {"charset": "utf8mb4"},
+        "OPTIONS": database_options,
     }
 }
 
