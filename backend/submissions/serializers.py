@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from .models import Feedback, Submission, SubmissionHistory
 
@@ -13,12 +14,30 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
 
 class SubmissionHistorySerializer(serializers.ModelSerializer):
+    file_name = serializers.SerializerMethodField()
+
     class Meta:
         model = SubmissionHistory
-        fields = ["id", "file", "status", "replaced_at"]
+        fields = ["id", "file", "file_name", "status", "replaced_at"]
+
+    def get_file_url(self, obj):
+        return reverse(
+            "submission-history-file",
+            kwargs={"pk": obj.submission_id, "history_id": obj.pk},
+            request=self.context.get("request"),
+        )
+
+    def get_file_name(self, obj):
+        return obj.file.name.rsplit("/", 1)[-1]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["file"] = self.get_file_url(instance)
+        return data
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
+    file_name = serializers.SerializerMethodField()
     feedback = FeedbackSerializer(many=True, read_only=True)
     history = SubmissionHistorySerializer(many=True, read_only=True)
     milestone_title = serializers.CharField(source="milestone.title", read_only=True)
@@ -33,6 +52,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
             "milestone",
             "milestone_title",
             "file",
+            "file_name",
             "submitted_at",
             "updated_at",
             "status",
@@ -41,6 +61,21 @@ class SubmissionSerializer(serializers.ModelSerializer):
             "history",
         ]
         read_only_fields = ["submitted_at", "updated_at", "resubmission_count"]
+
+    def get_file_url(self, obj):
+        return reverse(
+            "submission-file",
+            kwargs={"pk": obj.pk},
+            request=self.context.get("request"),
+        )
+
+    def get_file_name(self, obj):
+        return obj.file.name.rsplit("/", 1)[-1]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["file"] = self.get_file_url(instance)
+        return data
 
 
 class SubmissionResubmitSerializer(serializers.Serializer):

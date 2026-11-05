@@ -251,7 +251,11 @@ export default function AdviserGroupDetail() {
                   <div className="flex items-center gap-4 mb-2">
                     <button
                       onClick={() =>
-                        setPreviewFile({ url: s.file, title: s.milestone_title })
+                        setPreviewFile({
+                          url: s.file,
+                          name: s.file_name,
+                          title: s.milestone_title,
+                        })
                       }
                       className="inline-flex items-center gap-1.5 text-sm text-fg/70 hover:text-fg"
                     >

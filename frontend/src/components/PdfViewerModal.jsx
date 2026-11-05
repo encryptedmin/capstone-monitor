@@ -46,6 +46,8 @@ export function PdfViewerModal({ file, onClose }) {
   const [scale, setScale] = useState(1.15);
   const [status, setStatus] = useState("idle"); // idle | loading | ready | error
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [download, setDownload] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Load the document whenever a new file is opened.
   useEffect(() => {
@@ -54,22 +56,49 @@ export function PdfViewerModal({ file, onClose }) {
     setStatus("loading");
     setPdf(null);
     setPageNum(1);
+    setDownload(null);
+    setErrorMessage("");
+    let downloadUrl = null;
 
     (async () => {
       try {
-        const [pdfjsLib, res] = await Promise.all([loadPdfjs(), pdfApi.fetch(file.url)]);
+        const res = await pdfApi.fetch(file.url);
+        if (cancelled) return;
+        const bytes = new Uint8Array(res.data);
+        const isPdf = new TextDecoder()
+          .decode(bytes.subarray(0, 1024))
+          .includes("%PDF-");
+        if (!isPdf) {
+          const blob = new Blob([res.data], {
+            type: res.headers["content-type"] || "application/octet-stream",
+          });
+          downloadUrl = URL.createObjectURL(blob);
+          setDownload({ url: downloadUrl, name: file.name || "submission" });
+          setStatus("download");
+          return;
+        }
+
+        const pdfjsLib = await loadPdfjs();
         if (cancelled) return;
         const doc = await pdfjsLib.getDocument({ data: new Uint8Array(res.data) }).promise;
         if (cancelled) return;
         setPdf(doc);
         setStatus("ready");
-      } catch {
-        if (!cancelled) setStatus("error");
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(
+            error.response?.status === 404
+              ? "The server could not find this upload. On Render's free plan, files stored on the service can be lost after a restart; if so, upload the file again."
+              : "The server couldn't return this file. Check your connection and try again."
+          );
+          setStatus("error");
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     };
   }, [file, loadAttempt]);
 
@@ -181,7 +210,7 @@ export function PdfViewerModal({ file, onClose }) {
                   <AlertTriangle size={22} className="text-danger" />
                   <p className="font-medium text-fg">Couldn't load this document</p>
                   <p className="text-sm text-fg/62 max-w-sm">
-                    The file may be unavailable. Please try again.
+                    {errorMessage || "The file may be unavailable. Please try again."}
                   </p>
                   <button
                     onClick={() => setLoadAttempt((attempt) => attempt + 1)}
@@ -189,6 +218,21 @@ export function PdfViewerModal({ file, onClose }) {
                   >
                     <RotateCcw size={16} /> Try again
                   </button>
+                </div>
+              )}
+              {status === "download" && download && (
+                <div className="h-full flex flex-col items-center justify-center text-center gap-3 px-6">
+                  <p className="font-medium text-fg">This file cannot be previewed here.</p>
+                  <p className="text-sm text-fg/62 max-w-sm">
+                    Download it to open it with an app that supports this file type.
+                  </p>
+                  <a
+                    href={download.url}
+                    download={download.name}
+                    className="rounded-lg px-4 py-2.5 text-sm font-medium bg-fg/[0.04] text-fg hover:bg-fg/[0.08] border border-fg/10 transition-colors"
+                  >
+                    Download file
+                  </a>
                 </div>
               )}
               <canvas

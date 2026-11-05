@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status as http_status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -5,6 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from accounts.permissions import IsAdminOrAdviser, IsStudent
+from config.file_responses import private_file_response
 from notifications.utils import notify_group, notify_user
 
 from .models import Feedback, Submission, SubmissionHistory
@@ -67,6 +69,24 @@ class SubmissionViewSet(viewsets.ModelViewSet):
             f"Submission status updated to '{submission.get_status_display()}'.",
         )
 
+    @action(detail=True, methods=["get"], url_path="file")
+    def file(self, request, pk=None):
+        """Serve a submission only to users allowed to see its parent row."""
+        submission = self.get_object()
+        return private_file_response(submission.file)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path=r"history/(?P<history_id>[^/.]+)/file",
+        url_name="history-file",
+    )
+    def history_file(self, request, pk=None, history_id=None):
+        """Serve a previous version through the same group-scoped access check."""
+        submission = self.get_object()
+        history = get_object_or_404(submission.history.all(), pk=history_id)
+        return private_file_response(history.file)
+
     @action(detail=True, methods=["post"])
     def resubmit(self, request, pk=None):
         """Student replaces the file on their own rejected/revision-needed
@@ -104,7 +124,12 @@ class SubmissionViewSet(viewsets.ModelViewSet):
                 f"'{submission.group.capstone_title}' resubmitted a milestone for review.",
             )
 
-        return Response(SubmissionSerializer(submission).data)
+        return Response(
+            SubmissionSerializer(
+                submission,
+                context=self.get_serializer_context(),
+            ).data
+        )
 
 
 class FeedbackViewSet(viewsets.ModelViewSet):
