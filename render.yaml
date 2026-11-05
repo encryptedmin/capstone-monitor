@@ -15,7 +15,7 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
-        value: capstone-monitor-api.onrender.com
+        value: capstone-monitor.onrender.com
       - key: CORS_ALLOWED_ORIGINS
         value: https://capstone-monitor-frontend.onrender.com
       - key: DB_NAME
@@ -45,4 +45,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://capstone-monitor-api.onrender.com/api
+        value: https://capstone-monitor.onrender.com/api

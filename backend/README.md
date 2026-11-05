@@ -69,7 +69,7 @@ Render API environment variables:
 |---|---|
 | `DJANGO_SECRET_KEY` | Generate a long random secret; the Blueprint generates one |
 | `DJANGO_DEBUG` | `False` |
-| `DJANGO_ALLOWED_HOSTS` | `capstone-monitor-api.onrender.com` (replace if the service URL differs) |
+| `DJANGO_ALLOWED_HOSTS` | `capstone-monitor.onrender.com` (replace if the service URL differs; Render's assigned hostname is also added automatically) |
 | `CORS_ALLOWED_ORIGINS` | `https://capstone-monitor-frontend.onrender.com` (replace if the frontend URL differs) |
 | `DB_NAME` | `capstone_monitor` |
 | `DB_USER` | Aiven MySQL username |
