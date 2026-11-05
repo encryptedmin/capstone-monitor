@@ -35,7 +35,14 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+debug_requested = os.environ.get("DJANGO_DEBUG", "False").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+running_on_render = os.environ.get("RENDER", "").strip().lower() == "true"
+DEBUG = debug_requested and not running_on_render
 
 ALLOWED_HOSTS = [
     host.strip()
