@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Users, Check, Ban, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Users, Ban, RotateCcw, KeyRound } from "lucide-react";
 import { usersApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
 import { flattenErrors } from "../../lib/names";
@@ -50,6 +50,9 @@ export default function AdminUsers() {
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [actionTarget, setActionTarget] = useState(null);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [actionSaving, setActionSaving] = useState(false);
   const { push } = useToast();
 
   const load = async (role, status) => {
@@ -63,24 +66,27 @@ export default function AdminUsers() {
     load(roleFilter, statusFilter);
   }, [roleFilter, statusFilter]);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Remove this user? Their capstone files, titles, and submissions are kept on record. This cannot be undone.")) return;
-    await usersApi.remove(id);
-    push("User removed.", "success");
-    load(roleFilter, statusFilter);
-  };
-
-  const approve = async (id) => {
-    await usersApi.setActive(id, true);
-    push("Account approved.", "success");
-    load(roleFilter, statusFilter);
-  };
-
-  const disable = async (id) => {
-    if (!confirm("Disable this account? They'll keep all their files, but won't be able to sign in or submit anything new.")) return;
-    await usersApi.setActive(id, false);
-    push("Account disabled.", "success");
-    load(roleFilter, statusFilter);
+  const runAction = async () => {
+    const { user, action } = actionTarget;
+    setActionSaving(true);
+    try {
+      if (action === "approve" || action === "re-enable") {
+        await usersApi.setActive(user.id, true);
+        push(action === "approve" ? "Account approved." : "Account re-enabled.", "success");
+      } else if (action === "disable") {
+        await usersApi.setActive(user.id, false);
+        push("Account disabled.", "success");
+      } else {
+        await usersApi.remove(user.id);
+        push("User removed.", "success");
+      }
+      setActionTarget(null);
+      load(roleFilter, statusFilter);
+    } catch (err) {
+      push(err.response?.data?.detail || `Couldn't ${action} this account.`, "error");
+    } finally {
+      setActionSaving(false);
+    }
   };
 
   return (
@@ -168,18 +174,11 @@ export default function AdminUsers() {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       {u.account_status === "pending" && (
-                        <button
-                          onClick={() => approve(u.id)}
-                          title="Approve"
-                          aria-label="Approve"
-                          className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-cyan transition-colors"
-                        >
-                          <Check size={15} />
-                        </button>
+                        <Button className="px-3 py-1.5" onClick={() => setActionTarget({ user: u, action: "approve" })}>Approve</Button>
                       )}
                       {u.account_status === "active" ? (
                         <button
-                          onClick={() => disable(u.id)}
+                          onClick={() => setActionTarget({ user: u, action: "disable" })}
                           title="Disable"
                           aria-label="Disable"
                           className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-danger transition-colors"
@@ -188,7 +187,7 @@ export default function AdminUsers() {
                         </button>
                       ) : u.account_status === "disabled" ? (
                         <button
-                          onClick={() => approve(u.id)}
+                          onClick={() => setActionTarget({ user: u, action: "re-enable" })}
                           title="Re-enable"
                           aria-label="Re-enable"
                           className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-cyan transition-colors"
@@ -196,8 +195,18 @@ export default function AdminUsers() {
                           <RotateCcw size={15} />
                         </button>
                       ) : null}
+                      {u.role === "student" && (
+                        <button
+                          onClick={() => setResetTarget(u)}
+                          title="Reset student password"
+                          aria-label={`Reset password for ${u.email}`}
+                          className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-accent transition-colors"
+                        >
+                          <KeyRound size={15} />
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleDelete(u.id)}
+                        onClick={() => setActionTarget({ user: u, action: "delete" })}
                         title="Delete"
                           aria-label="Delete"
                         className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-danger transition-colors"
@@ -221,6 +230,32 @@ export default function AdminUsers() {
           setModalOpen(false);
           load(roleFilter, statusFilter);
         }}
+      />
+      <Modal
+        open={!!actionTarget}
+        onClose={() => !actionSaving && setActionTarget(null)}
+        title={`${actionTarget?.action === "delete" ? "Delete" : actionTarget?.action === "approve" ? "Approve" : actionTarget?.action === "disable" ? "Disable" : "Re-enable"} account`}
+      >
+        <p className="text-sm text-fg/70 mb-5">
+          {actionTarget?.action === "delete"
+            ? `Remove ${actionTarget?.user?.email}? Their capstone files and submissions stay on record. This cannot be undone.`
+            : actionTarget?.action === "disable"
+              ? `Disable ${actionTarget?.user?.email}? They will not be able to sign in or submit new work.`
+              : actionTarget?.action === "approve"
+                ? `Approve ${actionTarget?.user?.email} and allow them to sign in?`
+                : `Re-enable ${actionTarget?.user?.email} and allow them to sign in?`}
+        </p>
+        <div className="flex gap-3">
+          <Button type="button" variant="ghostLight" className="flex-1" onClick={() => setActionTarget(null)} disabled={actionSaving}>Cancel</Button>
+          <Button type="button" variant={actionTarget?.action === "delete" || actionTarget?.action === "disable" ? "danger" : "primary"} className="flex-1" onClick={runAction} loading={actionSaving}>
+            {actionTarget?.action === "delete" ? "Delete account" : actionTarget?.action === "approve" ? "Approve" : actionTarget?.action === "disable" ? "Disable account" : "Re-enable account"}
+          </Button>
+        </div>
+      </Modal>
+      <ResetStudentPasswordModal
+        user={resetTarget}
+        onClose={() => setResetTarget(null)}
+        onSaved={() => { setResetTarget(null); push("Student password reset.", "success"); }}
       />
     </div>
   );
@@ -361,6 +396,59 @@ function CreateUserModal({ open, onClose, onSaved }) {
           loading={saving}
           disabled={mismatch}
         />
+      </form>
+    </Modal>
+  );
+}
+
+function ResetStudentPasswordModal({ user, onClose, onSaved }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const { push } = useToast();
+  const mismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
+  const close = () => {
+    if (saving) return;
+    setPassword("");
+    setConfirmPassword("");
+    setError("");
+    onClose();
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await usersApi.resetPassword(user.id, password);
+      setPassword("");
+      setConfirmPassword("");
+      onSaved();
+    } catch (err) {
+      const details = err.response?.data?.password;
+      const message = Array.isArray(details) ? details.join(" ") : details || "Couldn't reset the password.";
+      setError(message);
+      push(message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={!!user} onClose={close} title="Reset student password">
+      <form onSubmit={submit}>
+        <p className="text-sm text-fg/65 mb-4">Set a temporary password for {user?.email}. The student must receive it securely from you. Their existing sessions will be signed out.</p>
+        <Field label="New password">
+          <input className={inputClass} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </Field>
+        <Field label="Confirm new password">
+          <input className={inputClass} type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+        </Field>
+        {mismatch && <p className="text-xs text-danger mb-3">Passwords do not match.</p>}
+        {error && <p role="alert" className="text-xs text-danger mb-3">{error}</p>}
+        <ModalActions onCancel={close} submitLabel="Reset password" loading={saving} disabled={!password || mismatch} />
       </form>
     </Modal>
   );

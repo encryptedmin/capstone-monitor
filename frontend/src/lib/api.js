@@ -107,6 +107,7 @@ export const usersApi = {
   update: (id, payload) => api.patch(`/users/${id}/`, payload),
   remove: (id) => api.delete(`/users/${id}/`),
   setActive: (id, isActive) => api.post(`/users/${id}/set-active/`, { is_active: isActive }),
+  resetPassword: (id, password) => api.post(`/users/${id}/reset-password/`, { password }),
   setAdviserCapacity: (id, capacityOverride) =>
     api.post(`/users/${id}/set-adviser-capacity/`, { capacity_override: capacityOverride }),
 };

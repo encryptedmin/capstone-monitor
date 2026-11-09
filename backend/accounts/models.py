@@ -191,11 +191,13 @@ class LoginSession(models.Model):
     END_LOGOUT = "logout"
     END_SERVER_RESTART = "server_restart"
     END_DISABLED = "account_disabled"
+    END_PASSWORD_RESET = "password_reset"
     END_CHOICES = [
         (END_REPLACED, "Replaced by a newer login on this device"),
         (END_LOGOUT, "Logged out"),
         (END_SERVER_RESTART, "Invalidated after server restart"),
         (END_DISABLED, "Account disabled"),
+        (END_PASSWORD_RESET, "Password reset by an administrator"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

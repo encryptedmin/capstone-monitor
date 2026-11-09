@@ -1,5 +1,7 @@
 import json
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
@@ -226,6 +228,30 @@ class UserViewSet(viewsets.ModelViewSet):
                 active_device_id=None,
             )
         return Response(UserSerializer(target).data)
+
+    @action(detail=True, methods=["post"], url_path="reset-password")
+    def reset_password(self, request, pk=None):
+        """Set a student's password after an identity-checked admin request."""
+        target = self.get_object()
+        if target.role != User.Role.STUDENT:
+            return Response({"detail": "Only student passwords can be reset here."}, status=status.HTTP_400_BAD_REQUEST)
+
+        password = request.data.get("password")
+        if not isinstance(password, str) or not password:
+            return Response({"password": ["A new password is required."]}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            validate_password(password, user=target)
+        except ValidationError as exc:
+            return Response({"password": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        target.set_password(password)
+        target.save(update_fields=["password"])
+        LoginSession.objects.filter(user=target, ended_at__isnull=True).update(
+            ended_at=timezone.now(),
+            end_reason=LoginSession.END_PASSWORD_RESET,
+            active_device_id=None,
+        )
+        return Response({"detail": "Student password reset successfully."})
 
 
 class SchoolYearViewSet(viewsets.ModelViewSet):

@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
@@ -244,7 +245,22 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        super().validate(attrs)
+        try:
+            super().validate(attrs)
+        except AuthenticationFailed as exc:
+            email = attrs.get(self.username_field, "")
+            password = attrs.get("password", "")
+            user = User.objects.filter(email__iexact=email.strip()).first() if isinstance(email, str) else None
+            if (
+                user
+                and user.account_status == "pending"
+                and isinstance(password, str)
+                and user.check_password(password)
+            ):
+                raise AuthenticationFailed(
+                    "Your account is still under review and is currently pending approval."
+                ) from exc
+            raise
 
         request = self.context.get("request")
         device_id = ""

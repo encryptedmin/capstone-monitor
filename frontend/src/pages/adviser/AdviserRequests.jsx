@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Inbox, Check, X, Eye } from "lucide-react";
+import { Inbox, X, Eye } from "lucide-react";
 import { groupsApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
 import { PdfViewerModal } from "../../components/PdfViewerModal";
@@ -11,6 +11,8 @@ export default function AdviserRequests() {
   const [loading, setLoading] = useState(true);
   const [previewFile, setPreviewFile] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [approving, setApproving] = useState(false);
   const { push } = useToast();
 
   const load = async () => {
@@ -25,14 +27,19 @@ export default function AdviserRequests() {
     load();
   }, []);
 
-  const accept = async (id) => {
+  const accept = async () => {
+    if (!approveTarget) return;
+    setApproving(true);
     try {
-      await groupsApi.accept(id);
+      await groupsApi.accept(approveTarget.id);
       push("Title accepted -- the group now counts toward your advisory load.", "success");
+      setApproveTarget(null);
       load();
     } catch (err) {
       const msg = err.response?.data?.detail || "Couldn't accept that request.";
       push(msg, "error");
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -72,11 +79,11 @@ export default function AdviserRequests() {
                     <Button variant="ghostLight" icon={Eye} onClick={() => setPreviewFile({ url: g.title_document, title: g.capstone_title })}>
                       View document
                     </Button>
-                    <Button icon={Check} onClick={() => accept(g.id)}>
-                      Accept
+                    <Button onClick={() => setApproveTarget(g)}>
+                      Approve
                     </Button>
                     <Button variant="danger" icon={X} onClick={() => setRejectTarget(g)}>
-                      Reject
+                      Decline
                     </Button>
                   </div>
                 </div>
@@ -87,6 +94,13 @@ export default function AdviserRequests() {
       )}
 
       <RejectModal group={rejectTarget} onClose={() => setRejectTarget(null)} onDone={() => { setRejectTarget(null); load(); }} />
+      <Modal open={!!approveTarget} onClose={() => !approving && setApproveTarget(null)} title="Approve title request">
+        <p className="text-sm text-fg/70 mb-5">Approve “{approveTarget?.capstone_title}”? This accepts the group under your advisory load and lets the students continue.</p>
+        <div className="flex gap-3">
+          <Button type="button" variant="ghostLight" className="flex-1" onClick={() => setApproveTarget(null)} disabled={approving}>Cancel</Button>
+          <Button type="button" className="flex-1" onClick={accept} loading={approving}>Approve</Button>
+        </div>
+      </Modal>
       <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );

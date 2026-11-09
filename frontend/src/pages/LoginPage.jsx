@@ -36,8 +36,8 @@ export default function LoginPage() {
     try {
       const user = await login(email.trim().toLowerCase(), password);
       navigate(`/${user.role}`);
-    } catch {
-      setError("Incorrect email or password.");
+    } catch (err) {
+      setError(err.response?.data?.detail || "Incorrect email or password.");
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,7 @@ import {
   ZoomOut,
   AlertTriangle,
   RotateCcw,
+  Download,
 } from "lucide-react";
 import { Spinner } from "./ui";
 import { pdfApi } from "../lib/api";
@@ -25,6 +26,22 @@ function loadPdfjs() {
     });
   }
   return pdfjsLibPromise;
+}
+
+function getDownloadName(response, file) {
+  if (file.name) return file.name;
+  const disposition = response.headers["content-disposition"] || "";
+  const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  const headerName = encodedName || plainName;
+  if (headerName) {
+    try {
+      return decodeURIComponent(headerName);
+    } catch {
+      return headerName;
+    }
+  }
+  return `${file.title || "document"}.pdf`;
 }
 
 /**
@@ -82,6 +99,11 @@ export function PdfViewerModal({ file, onClose }) {
         if (cancelled) return;
         const doc = await pdfjsLib.getDocument({ data: new Uint8Array(res.data) }).promise;
         if (cancelled) return;
+        downloadUrl = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+        setDownload({
+          url: downloadUrl,
+          name: getDownloadName(res, file),
+        });
         setPdf(doc);
         setStatus("ready");
       } catch (error) {
@@ -151,6 +173,15 @@ export function PdfViewerModal({ file, onClose }) {
               <p className="font-medium text-fg text-sm truncate">{file.title}</p>
 
               <div className="flex items-center gap-1.5 shrink-0">
+                {status === "ready" && download && (
+                  <a
+                    href={download.url}
+                    download={download.name}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-fg/75 hover:bg-fg/[0.08] hover:text-fg transition-colors"
+                  >
+                    <Download size={15} /> Download PDF
+                  </a>
+                )}
                 {status === "ready" && (
                   <>
                     <button

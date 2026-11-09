@@ -39,6 +39,10 @@ export default function AdviserGroupDetail() {
   const [msModalOpen, setMsModalOpen] = useState(false);
   const [feedbackTarget, setFeedbackTarget] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
+  const [submissionDecision, setSubmissionDecision] = useState(null);
+  const [savingDecision, setSavingDecision] = useState(false);
+  const [milestoneDecision, setMilestoneDecision] = useState(null);
+  const [savingMilestoneDecision, setSavingMilestoneDecision] = useState(false);
   const { push } = useToast();
 
   const load = useCallback(async () => {
@@ -58,16 +62,34 @@ export default function AdviserGroupDetail() {
     load();
   }, [load]);
 
-  const updateMilestoneStatus = async (milestoneId, status) => {
-    await milestonesApi.update(milestoneId, { status });
-    push("Milestone status updated.", "success");
-    load();
+  const updateMilestoneStatus = async () => {
+    if (!milestoneDecision) return;
+    setSavingMilestoneDecision(true);
+    try {
+      await milestonesApi.update(milestoneDecision.milestone.id, { status: milestoneDecision.status });
+      push("Milestone status updated.", "success");
+      setMilestoneDecision(null);
+      load();
+    } catch (err) {
+      push(err.response?.data?.detail || "Couldn't update the milestone status.", "error");
+    } finally {
+      setSavingMilestoneDecision(false);
+    }
   };
 
-  const updateSubmissionStatus = async (submissionId, status) => {
-    await submissionsApi.update(submissionId, { status });
-    push("Submission status updated.", "success");
-    load();
+  const updateSubmissionStatus = async () => {
+    if (!submissionDecision) return;
+    setSavingDecision(true);
+    try {
+      await submissionsApi.update(submissionDecision.submission.id, { status: submissionDecision.status });
+      push("Submission status updated.", "success");
+      setSubmissionDecision(null);
+      load();
+    } catch (err) {
+      push(err.response?.data?.detail || "Couldn't update the submission status.", "error");
+    } finally {
+      setSavingDecision(false);
+    }
   };
 
   const toggleStudentActive = async (student, nextActive) => {
@@ -193,7 +215,7 @@ export default function AdviserGroupDetail() {
                   </div>
                   <select
                     value={m.status}
-                    onChange={(e) => updateMilestoneStatus(m.id, e.target.value)}
+                    onChange={(e) => setMilestoneDecision({ milestone: m, status: e.target.value })}
                     className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
                   >
                     {STATUS_OPTIONS.map((s) => (
@@ -237,7 +259,7 @@ export default function AdviserGroupDetail() {
                     </div>
                     <select
                       value={s.status}
-                      onChange={(e) => updateSubmissionStatus(s.id, e.target.value)}
+                      onChange={(e) => setSubmissionDecision({ submission: s, status: e.target.value })}
                       className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
                     >
                       {SUBMISSION_OPTIONS.map((opt) => (
@@ -302,6 +324,26 @@ export default function AdviserGroupDetail() {
           load();
         }}
       />
+      <Modal open={!!submissionDecision} onClose={() => !savingDecision && setSubmissionDecision(null)} title="Confirm submission decision">
+        <p className="text-sm text-fg/70 mb-5">
+          Change “{submissionDecision?.milestone_title ?? submissionDecision?.submission?.milestone_title}” to <span className="font-semibold text-fg">{submissionDecision?.status?.replace("_", " ")}</span>? The student will see this decision.
+        </p>
+        <div className="flex gap-3">
+          <Button type="button" variant="ghostLight" className="flex-1" onClick={() => setSubmissionDecision(null)} disabled={savingDecision}>Cancel</Button>
+          <Button type="button" className="flex-1" onClick={updateSubmissionStatus} loading={savingDecision}>
+            {submissionDecision?.status === "approved" ? "Approve submission" : submissionDecision?.status === "rejected" ? "Decline submission" : "Confirm status"}
+          </Button>
+        </div>
+      </Modal>
+      <Modal open={!!milestoneDecision} onClose={() => !savingMilestoneDecision && setMilestoneDecision(null)} title="Confirm milestone status">
+        <p className="text-sm text-fg/70 mb-5">
+          Change “{milestoneDecision?.milestone?.title}” to <span className="font-semibold text-fg">{milestoneDecision?.status?.replace("_", " ")}</span>?
+        </p>
+        <div className="flex gap-3">
+          <Button type="button" variant="ghostLight" className="flex-1" onClick={() => setMilestoneDecision(null)} disabled={savingMilestoneDecision}>Cancel</Button>
+          <Button type="button" className="flex-1" onClick={updateMilestoneStatus} loading={savingMilestoneDecision}>Confirm status</Button>
+        </div>
+      </Modal>
       <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
