@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from accounts.permissions import IsAdminOrAdviser, IsStudent
+from accounts.permissions import IsAdviser, IsAdminOrAdviser, IsStudent
 from config.file_responses import private_file_response
 from notifications.utils import notify_group, notify_user
 
@@ -36,7 +36,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
         if self.action == "resubmit":
             return [IsStudent()]
         if self.action in ["update", "partial_update", "destroy"]:
-            return [IsAdminOrAdviser()]
+            return [IsAdviser()]
         return super().get_permissions()
 
     def get_queryset(self):
@@ -45,12 +45,17 @@ class SubmissionViewSet(viewsets.ModelViewSet):
             "feedback", "history"
         )
         if user.is_admin:
-            return qs
-        if user.is_adviser:
-            return qs.filter(group__adviser=user)
-        if user.is_student:
-            return qs.filter(group__members__student=user)
-        return qs.none()
+            pass
+        elif user.is_adviser:
+            qs = qs.filter(group__adviser=user)
+        elif user.is_student:
+            qs = qs.filter(group__members__student=user)
+        else:
+            return qs.none()
+        group_id = self.request.query_params.get("group")
+        if group_id:
+            qs = qs.filter(group_id=group_id)
+        return qs
 
     def perform_create(self, serializer):
         group = serializer.validated_data["group"]
@@ -137,6 +142,11 @@ class FeedbackViewSet(viewsets.ModelViewSet):
 
     serializer_class = FeedbackSerializer
     permission_classes = [IsAdminOrAdviser]
+
+    def get_permissions(self):
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            return [IsAdviser()]
+        return super().get_permissions()
 
     def get_queryset(self):
         user = self.request.user

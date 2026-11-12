@@ -93,6 +93,27 @@ api.interceptors.response.use(
 
 // --- endpoint helpers ----------------------------------------------------
 
+const listAllPages = async (path, params = {}) => {
+  const rows = [];
+  let page = 1;
+  let firstResponse = null;
+
+  while (true) {
+    const response = await api.get(path, { params: { ...params, page } });
+    firstResponse ||= response;
+    const { data } = response;
+    if (!Array.isArray(data.results)) return response;
+    rows.push(...data.results);
+    if (!data.next) {
+      return {
+        ...firstResponse,
+        data: { ...firstResponse.data, results: rows, count: rows.length, next: null, previous: null },
+      };
+    }
+    page += 1;
+  }
+};
+
 export const authApi = {
   login: (email, password) =>
     api.post("/auth/login/", { email, password, device_id: tokenStore.deviceId }),
@@ -149,14 +170,14 @@ export const groupsApi = {
 };
 
 export const milestonesApi = {
-  list: () => api.get("/milestones/"),
+  list: (params = {}) => listAllPages("/milestones/", params),
   create: (payload) => api.post("/milestones/", payload),
   update: (id, payload) => api.patch(`/milestones/${id}/`, payload),
   remove: (id) => api.delete(`/milestones/${id}/`),
 };
 
 export const submissionsApi = {
-  list: () => api.get("/submissions/"),
+  list: (params = {}) => listAllPages("/submissions/", params),
   create: (formData) =>
     api.post("/submissions/", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -185,6 +206,7 @@ export const announcementsApi = {
 
 export const templatesApi = {
   list: () => api.get("/document-templates/"),
+  fileUrl: (id) => `/document-templates/${id}/file/`,
   create: (formData) =>
     api.post("/document-templates/", formData, {
       headers: { "Content-Type": "multipart/form-data" },

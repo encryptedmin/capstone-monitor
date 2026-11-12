@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { CalendarRange, UserPlus, X, FolderKanban, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CalendarRange, UserPlus, X, FolderKanban, Eye, ArrowUpRight } from "lucide-react";
 import { groupsApi, schoolYearsApi, usersApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
 import { PdfViewerModal } from "../../components/PdfViewerModal";
@@ -59,8 +60,7 @@ export default function AdminGroups() {
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Capstone Groups</h1>
           <p className="text-fg/55 text-sm">
-            Groups are created when a student requests a title and an adviser accepts it. You can
-            still enroll additional members or reassign an adviser here.
+            Select a capstone title to review its milestones and submissions. Enroll members or reassign an adviser here.
           </p>
         </div>
         <label className="relative min-w-64">
@@ -110,7 +110,15 @@ export default function AdminGroups() {
           {visibleGroups.map((g) => (
             <LightCard key={g.id} className="p-5">
               <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="font-display font-semibold text-lg text-fg">{g.capstone_title}</h3>
+                <h3 className="font-display font-semibold text-lg text-fg">
+                  <Link
+                    to={`/admin/groups/${g.id}`}
+                    className="inline-flex items-center gap-1.5 hover:text-accent hover:underline underline-offset-4 transition-colors"
+                  >
+                    {g.capstone_title}
+                    <ArrowUpRight size={15} className="shrink-0 text-fg/40" />
+                  </Link>
+                </h3>
                 <StatusBadge status={g.status} />
               </div>
               <p className="text-xs text-fg/58 mb-1">

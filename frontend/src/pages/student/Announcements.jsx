@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Pin, Megaphone, FileBox, Download } from "lucide-react";
 import { announcementsApi, templatesApi } from "../../lib/api";
 import { LightCard, EmptyState, Spinner } from "../../components/ui";
+import { PdfViewerModal } from "../../components/PdfViewerModal";
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -11,6 +12,7 @@ export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     Promise.all([announcementsApi.list(), templatesApi.list()]).then(([a, t]) => {
@@ -72,19 +74,25 @@ export default function Announcements() {
                 <FileBox size={18} className="text-accent mb-3" />
                 <p className="font-medium text-fg mb-1">{t.title}</p>
                 {t.description && <p className="text-sm text-fg/66 mb-3">{t.description}</p>}
-                <a
-                  href={t.file}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPreviewFile({
+                      url: templatesApi.fileUrl(t.id),
+                      title: t.title,
+                      name: t.file?.split("/").pop(),
+                    })
+                  }
                   className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
                 >
-                  <Download size={14} /> Download
-                </a>
+                  <Download size={14} /> View / Download
+                </button>
               </LightCard>
             ))}
           </div>
         )}
       </div>
+      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }

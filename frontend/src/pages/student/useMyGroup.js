@@ -36,11 +36,11 @@ export function useMyGroup() {
 
     if (myGroup && myGroup.status === "accepted") {
       const [{ data: ms }, { data: subs }] = await Promise.all([
-        milestonesApi.list(),
-        submissionsApi.list(),
+        milestonesApi.list({ group: myGroup.id }),
+        submissionsApi.list({ group: myGroup.id }),
       ]);
-      setMilestones((ms.results ?? ms).filter((m) => m.group === myGroup.id));
-      setSubmissions((subs.results ?? subs).filter((s) => s.group === myGroup.id));
+      setMilestones(ms.results ?? ms);
+      setSubmissions(subs.results ?? subs);
     } else {
       setMilestones([]);
       setSubmissions([]);

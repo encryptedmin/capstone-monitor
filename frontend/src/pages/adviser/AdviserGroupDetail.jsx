@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { groupsApi, milestonesApi, submissionsApi, usersApi } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { PdfViewerModal } from "../../components/PdfViewerModal";
 import {
@@ -23,6 +24,7 @@ import {
   ModalActions,
   Field,
   inputClass,
+  StatusBadge,
 } from "../../components/ui";
 
 const STATUS_OPTIONS = ["pending", "in_progress", "completed", "overdue"];
@@ -30,6 +32,9 @@ const SUBMISSION_OPTIONS = ["pending", "approved", "revision_needed", "rejected"
 
 export default function AdviserGroupDetail() {
   const { groupId } = useParams();
+  const { user } = useAuth();
+  const isAdmin = user.role === "admin";
+  const backPath = isAdmin ? "/admin/groups" : "/adviser";
   const id = Number(groupId);
   const [group, setGroup] = useState(null);
   const [milestones, setMilestones] = useState([]);
@@ -49,12 +54,12 @@ export default function AdviserGroupDetail() {
     setLoading(true);
     const [{ data: g }, { data: ms }, { data: subs }] = await Promise.all([
       groupsApi.get(id),
-      milestonesApi.list(),
-      submissionsApi.list(),
+      milestonesApi.list({ group: id }),
+      submissionsApi.list({ group: id }),
     ]);
     setGroup(g);
-    setMilestones((ms.results ?? ms).filter((m) => m.group === id));
-    setSubmissions((subs.results ?? subs).filter((s) => s.group === id));
+    setMilestones(ms.results ?? ms);
+    setSubmissions(subs.results ?? subs);
     setLoading(false);
   }, [id]);
 
@@ -119,12 +124,15 @@ export default function AdviserGroupDetail() {
   return (
     <div>
       <Link
-        to="/adviser"
+        to={backPath}
         className="inline-flex items-center gap-1.5 text-fg/62 hover:text-fg text-sm mb-4"
       >
         <ArrowLeft size={14} /> Back to groups
       </Link>
       <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">{group.capstone_title}</h1>
+      {isAdmin && (
+        <p className="text-sm text-fg/55 mb-4">Read-only overview of this group’s milestones and submissions.</p>
+      )}
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {group.members.map((m) => {
           const student = m.student_detail;
@@ -157,15 +165,17 @@ export default function AdviserGroupDetail() {
               className="inline-flex items-center gap-2 rounded-full bg-fg/10 pl-3 pr-1.5 py-1 text-sm text-fg/80"
             >
               {student.student_profile?.full_name || student.email}
-              <button
-                onClick={() => toggleStudentActive(student, !isActive)}
-                title={isActive ? "Disable student" : "Re-enable student"}
-                className={`p-1 rounded-full transition-colors ${
-                  isActive ? "text-fg/55 hover:text-danger hover:bg-fg/10" : "text-accent hover:bg-fg/10"
-                }`}
-              >
-                {isActive ? <Ban size={12} /> : <RotateCcw size={12} />}
-              </button>
+              {!isAdmin && (
+                <button
+                  onClick={() => toggleStudentActive(student, !isActive)}
+                  title={isActive ? "Disable student" : "Re-enable student"}
+                  className={`p-1 rounded-full transition-colors ${
+                    isActive ? "text-fg/55 hover:text-danger hover:bg-fg/10" : "text-accent hover:bg-fg/10"
+                  }`}
+                >
+                  {isActive ? <Ban size={12} /> : <RotateCcw size={12} />}
+                </button>
+              )}
             </span>
           );
         })}
@@ -192,9 +202,11 @@ export default function AdviserGroupDetail() {
         <LightCard className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display font-semibold text-lg text-fg">Milestones</h2>
-            <Button variant="ghostLight" icon={Plus} onClick={() => setMsModalOpen(true)}>
-              Add milestone
-            </Button>
+            {!isAdmin && (
+              <Button variant="ghostLight" icon={Plus} onClick={() => setMsModalOpen(true)}>
+                Add milestone
+              </Button>
+            )}
           </div>
           {milestones.length === 0 ? (
             <EmptyState icon={ListChecks} title="No milestones yet" />
@@ -212,18 +224,23 @@ export default function AdviserGroupDetail() {
                         year: "numeric",
                       })}
                     </p>
+                    {m.description && <p className="text-sm text-fg/65 mt-1">{m.description}</p>}
                   </div>
-                  <select
-                    value={m.status}
-                    onChange={(e) => setMilestoneDecision({ milestone: m, status: e.target.value })}
-                    className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s.replace("_", " ")}
-                      </option>
-                    ))}
-                  </select>
+                  {isAdmin ? (
+                    <StatusBadge status={m.status} />
+                  ) : (
+                    <select
+                      value={m.status}
+                      onChange={(e) => setMilestoneDecision({ milestone: m, status: e.target.value })}
+                      className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
+                    >
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s.replace("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </li>
               ))}
             </ul>
@@ -257,17 +274,21 @@ export default function AdviserGroupDetail() {
                         })}
                       </p>
                     </div>
-                    <select
-                      value={s.status}
-                      onChange={(e) => setSubmissionDecision({ submission: s, status: e.target.value })}
-                      className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
-                    >
-                      {SUBMISSION_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt.replace("_", " ")}
-                        </option>
-                      ))}
-                    </select>
+                    {isAdmin ? (
+                      <StatusBadge status={s.status} />
+                    ) : (
+                      <select
+                        value={s.status}
+                        onChange={(e) => setSubmissionDecision({ submission: s, status: e.target.value })}
+                        className="text-xs rounded-full border border-fg/10 bg-fg/[0.02] px-3 py-1.5 outline-none focus:border-accent-500"
+                      >
+                        {SUBMISSION_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt.replace("_", " ")}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 mb-2">
@@ -283,13 +304,36 @@ export default function AdviserGroupDetail() {
                     >
                       <Eye size={14} /> View submission
                     </button>
-                    <button
-                      onClick={() => setFeedbackTarget(s)}
-                      className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
-                    >
-                      <MessageSquarePlus size={14} /> Add feedback
-                    </button>
+                    {!isAdmin && (
+                      <button
+                        onClick={() => setFeedbackTarget(s)}
+                        className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
+                      >
+                        <MessageSquarePlus size={14} /> Add feedback
+                      </button>
+                    )}
                   </div>
+
+                  {isAdmin && s.history?.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-fg/[0.06]">
+                      <p className="text-xs font-medium text-fg/55 mb-2">Previous versions</p>
+                      <div className="flex flex-wrap gap-3">
+                        {s.history.map((version, index) => (
+                          <button
+                            key={version.id}
+                            onClick={() => setPreviewFile({
+                              url: version.file,
+                              name: version.file_name,
+                              title: `${s.milestone_title} · Previous version ${s.history.length - index}`,
+                            })}
+                            className="inline-flex items-center gap-1.5 text-sm text-fg/70 hover:text-fg"
+                          >
+                            <Eye size={14} /> View {version.file_name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {s.feedback?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-fg/[0.06] space-y-2.5">

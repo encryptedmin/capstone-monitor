@@ -12,6 +12,7 @@ import {
   EmptyState,
   Spinner,
 } from "../../components/ui";
+import { PdfViewerModal } from "../../components/PdfViewerModal";
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -199,6 +200,7 @@ function TemplatesTab() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
   const { push } = useToast();
 
   const load = async () => {
@@ -243,14 +245,19 @@ function TemplatesTab() {
               <p className="font-medium text-fg mb-1">{t.title}</p>
               {t.description && <p className="text-sm text-fg/66 mb-3">{t.description}</p>}
               <div className="flex items-center justify-between">
-                <a
-                  href={t.file}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPreviewFile({
+                      url: templatesApi.fileUrl(t.id),
+                      title: t.title,
+                      name: t.file?.split("/").pop(),
+                    })
+                  }
                   className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
                 >
-                  <Download size={14} /> Download
-                </a>
+                  <Download size={14} /> View / Download
+                </button>
                 <button onClick={() => remove(t.id)} className="text-fg/45 hover:text-danger">
                   <Trash2 size={15} />
                 </button>
@@ -268,6 +275,7 @@ function TemplatesTab() {
           load();
         }}
       />
+      <PdfViewerModal file={previewFile} onClose={() => setPreviewFile(null)} />
     </div>
   );
 }

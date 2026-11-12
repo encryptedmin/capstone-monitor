@@ -1,3 +1,4 @@
+from django.http import FileResponse, Http404
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -68,3 +69,14 @@ class DocumentTemplateViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
+
+    @action(detail=True, methods=["get"], url_path="file")
+    def file(self, request, pk=None):
+        template = self.get_object()
+        if not template.file:
+            raise Http404("The template file is missing.")
+        try:
+            file_handle = template.file.open("rb")
+        except (FileNotFoundError, OSError):
+            raise Http404("The template file is missing.")
+        return FileResponse(file_handle, filename=template.file.name.rsplit("/", 1)[-1])

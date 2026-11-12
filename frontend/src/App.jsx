@@ -68,6 +68,7 @@ export default function App() {
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/users" element={<AdminUsers />} />
                   <Route path="/admin/groups" element={<AdminGroups />} />
+                  <Route path="/admin/groups/:groupId" element={<AdviserGroupDetail />} />
                   <Route path="/admin/adviser-status" element={<AdminAdviserStatus />} />
                   <Route path="/admin/school-years" element={<AdminSchoolYears />} />
                   <Route path="/admin/settings" element={<AdminSettings />} />
