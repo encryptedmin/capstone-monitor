@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, Users, Ban, RotateCcw, KeyRound } from "lucide-react";
 import { usersApi } from "../../lib/api";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 import { flattenErrors } from "../../lib/names";
 import {
   LightCard,
@@ -54,6 +55,7 @@ export default function AdminUsers() {
   const [resetTarget, setResetTarget] = useState(null);
   const [actionSaving, setActionSaving] = useState(false);
   const { push } = useToast();
+  const { user: currentUser } = useAuth();
 
   const load = async (role, status) => {
     setLoading(true);
@@ -95,11 +97,11 @@ export default function AdminUsers() {
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-semibold text-fg mb-1">Users</h1>
           <p className="text-fg/55 text-sm">
-            Approve student registrations, create advisers, and enable, disable, or remove accounts.
+            Approve student registrations, create accounts, and manage access.
           </p>
         </div>
         <Button icon={Plus} onClick={() => setModalOpen(true)}>
-          Create adviser
+          Create account
         </Button>
       </div>
 
@@ -156,10 +158,12 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
+              {users.map((u) => {
+                const isSelf = u.id === currentUser?.id;
+                return (
                 <tr key={u.id} className="border-b border-fg/[0.04] last:border-0">
                   <td className="px-4 py-3 text-fg">
-                    {u.student_profile?.full_name || u.adviser_profile?.full_name || "—"}
+                    {u.student_profile?.full_name || u.adviser_profile?.full_name || (u.role === "admin" ? "Administrator" : "—")}
                   </td>
                   {roleFilter === "student" && (
                     <td className="px-4 py-3 text-fg/70">{u.student_profile?.section || "-"}</td>
@@ -176,7 +180,7 @@ export default function AdminUsers() {
                       {u.account_status === "pending" && (
                         <Button className="px-3 py-1.5" onClick={() => setActionTarget({ user: u, action: "approve" })}>Approve</Button>
                       )}
-                      {u.account_status === "active" ? (
+                      {u.account_status === "active" && !isSelf ? (
                         <button
                           onClick={() => setActionTarget({ user: u, action: "disable" })}
                           title="Disable"
@@ -195,28 +199,31 @@ export default function AdminUsers() {
                           <RotateCcw size={15} />
                         </button>
                       ) : null}
-                      {u.role === "student" && (
+                      {(u.role === "student" || u.role === "adviser") && (
                         <button
                           onClick={() => setResetTarget(u)}
-                          title="Reset student password"
+                          title={`Reset ${u.role} password`}
                           aria-label={`Reset password for ${u.email}`}
                           className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-accent transition-colors"
                         >
                           <KeyRound size={15} />
                         </button>
                       )}
-                      <button
-                        onClick={() => setActionTarget({ user: u, action: "delete" })}
-                        title="Delete"
+                      {!isSelf && (
+                        <button
+                          onClick={() => setActionTarget({ user: u, action: "delete" })}
+                          title="Delete"
                           aria-label="Delete"
-                        className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-danger transition-colors"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                          className="rounded-lg p-2 text-fg/60 hover:bg-fg/[0.08] hover:text-danger transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           </div>
@@ -252,10 +259,13 @@ export default function AdminUsers() {
           </Button>
         </div>
       </Modal>
-      <ResetStudentPasswordModal
+      <ResetUserPasswordModal
         user={resetTarget}
         onClose={() => setResetTarget(null)}
-        onSaved={() => { setResetTarget(null); push("Student password reset.", "success"); }}
+        onSaved={() => {
+          setResetTarget(null);
+          push(`${resetTarget?.role === "adviser" ? "Adviser" : "Student"} password reset.`, "success");
+        }}
       />
     </div>
   );
@@ -304,8 +314,10 @@ function CreateUserModal({ open, onClose, onSaved }) {
     setSaving(true);
     setFieldErrors({});
     try {
-      await usersApi.create({ ...form, email: form.email.trim().toLowerCase(), role: "adviser" });
-      push("Adviser account created.", "success");
+      const payload = { ...form, email: form.email.trim().toLowerCase() };
+      if (form.role === "admin") delete payload.full_name;
+      await usersApi.create(payload);
+      push(`${form.role === "admin" ? "Administrator" : "Adviser"} account created.`, "success");
       reset();
       onSaved();
     } catch (err) {
@@ -330,9 +342,15 @@ function CreateUserModal({ open, onClose, onSaved }) {
   };
 
   return (
-    <Modal open={open} onClose={handleClose} title="Create adviser">
+    <Modal open={open} onClose={handleClose} title={`Create ${form.role === "admin" ? "administrator" : "adviser"}`}>
       <form onSubmit={submit}>
-        <Field label="Full name">
+        <Field label="Account type">
+          <select className={inputClass} value={form.role} onChange={set("role")}>
+            <option value="adviser">Adviser</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </Field>
+        {form.role === "adviser" && <Field label="Full name">
           <input
             className={`${inputClass} ${fieldErrors.full_name ? "!border-danger-500" : ""}`}
             value={form.full_name}
@@ -343,7 +361,7 @@ function CreateUserModal({ open, onClose, onSaved }) {
           {fieldErrors.full_name && (
             <span role="alert" className="block text-xs text-danger mt-1.5">{fieldErrors.full_name}</span>
           )}
-        </Field>
+        </Field>}
         <Field label="Email address">
           <input
             type="email"
@@ -358,7 +376,7 @@ function CreateUserModal({ open, onClose, onSaved }) {
           {fieldErrors.email ? (
             <span role="alert" className="block text-xs text-danger mt-1.5">{fieldErrors.email}</span>
           ) : (
-            <span className="block text-xs text-fg/55 mt-1.5">The adviser signs in with this email.</span>
+            <span className="block text-xs text-fg/55 mt-1.5">The {form.role === "admin" ? "administrator" : "adviser"} signs in with this email.</span>
           )}
         </Field>
         <Field label="Password">
@@ -392,7 +410,7 @@ function CreateUserModal({ open, onClose, onSaved }) {
         </label>
         <ModalActions
           onCancel={handleClose}
-          submitLabel="Create adviser"
+          submitLabel={`Create ${form.role === "admin" ? "administrator" : "adviser"}`}
           loading={saving}
           disabled={mismatch}
         />
@@ -401,7 +419,7 @@ function CreateUserModal({ open, onClose, onSaved }) {
   );
 }
 
-function ResetStudentPasswordModal({ user, onClose, onSaved }) {
+function ResetUserPasswordModal({ user, onClose, onSaved }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -437,9 +455,9 @@ function ResetStudentPasswordModal({ user, onClose, onSaved }) {
   };
 
   return (
-    <Modal open={!!user} onClose={close} title="Reset student password">
+    <Modal open={!!user} onClose={close} title={`Reset ${user?.role ?? "user"} password`}>
       <form onSubmit={submit}>
-        <p className="text-sm text-fg/65 mb-4">Set a temporary password for {user?.email}. The student must receive it securely from you. Their existing sessions will be signed out.</p>
+        <p className="text-sm text-fg/65 mb-4">Set a temporary password for {user?.email}. Share it securely with them. Their existing sessions will be signed out.</p>
         <Field label="New password">
           <input className={inputClass} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </Field>

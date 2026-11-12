@@ -94,9 +94,9 @@ uploads across restarts.
 The API is served at `http://127.0.0.1:8000/api/`. Django admin is at
 `/django-admin/` for quick data inspection.
 
-Creating the very first admin account needs the Django shell once, since
-account creation is admin-gated by design (only the Administrator's "Create
-User" use case creates adviser/student accounts afterwards):
+Create the first admin account with the Django shell. After signing in, an
+administrator can create additional admin or adviser accounts from the Users
+page; students register themselves:
 
 ```python
 python manage.py shell

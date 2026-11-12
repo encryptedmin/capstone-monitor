@@ -191,6 +191,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if is_active is None:
             return Response({"detail": "is_active is required."}, status=status.HTTP_400_BAD_REQUEST)
 
+        if request.user.is_admin and target.pk == request.user.pk and not bool(is_active):
+            return Response(
+                {"detail": "You cannot disable your own administrator account."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if not request.user.is_admin:
             # Advisers may only disable (not enable, not delete) their own
             # advisees -- never other advisers, admins, or unaffiliated students.
@@ -229,12 +235,24 @@ class UserViewSet(viewsets.ModelViewSet):
             )
         return Response(UserSerializer(target).data)
 
+    def destroy(self, request, *args, **kwargs):
+        target = self.get_object()
+        if request.user.is_admin and target.pk == request.user.pk:
+            return Response(
+                {"detail": "You cannot delete your own administrator account."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=True, methods=["post"], url_path="reset-password")
     def reset_password(self, request, pk=None):
-        """Set a student's password after an identity-checked admin request."""
+        """Set a student's or adviser's password after an admin request."""
         target = self.get_object()
-        if target.role != User.Role.STUDENT:
-            return Response({"detail": "Only student passwords can be reset here."}, status=status.HTTP_400_BAD_REQUEST)
+        if target.role not in (User.Role.STUDENT, User.Role.ADVISER):
+            return Response(
+                {"detail": "Only student or adviser passwords can be reset here."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         password = request.data.get("password")
         if not isinstance(password, str) or not password:
@@ -251,7 +269,7 @@ class UserViewSet(viewsets.ModelViewSet):
             end_reason=LoginSession.END_PASSWORD_RESET,
             active_device_id=None,
         )
-        return Response({"detail": "Student password reset successfully."})
+        return Response({"detail": "Password reset successfully."})
 
 
 class SchoolYearViewSet(viewsets.ModelViewSet):

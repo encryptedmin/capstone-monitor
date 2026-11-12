@@ -110,12 +110,12 @@ class UserSerializer(serializers.ModelSerializer):
 class UserCreateSerializer(serializers.ModelSerializer):
     """
     Used by the Administrator's 'Create User' use case. Admins create
-    adviser accounts only; students must self-register publicly.
-    Admin-created adviser accounts are auto-approved.
+    adviser and administrator accounts; students must self-register publicly.
+    Admin-created accounts are auto-approved.
     """
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
-    full_name = serializers.CharField(write_only=True)
+    full_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
@@ -131,12 +131,17 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return validate_unique_email(value)
 
     def validate_role(self, value):
-        if value != User.Role.ADVISER:
-            raise serializers.ValidationError("Administrators can only create adviser accounts.")
+        if value not in (User.Role.ADMIN, User.Role.ADVISER):
+            raise serializers.ValidationError("Administrators can only create admin or adviser accounts.")
         return value
 
+    def validate(self, attrs):
+        if attrs.get("role") == User.Role.ADVISER and not attrs.get("full_name", "").strip():
+            raise serializers.ValidationError({"full_name": "This field is required for adviser accounts."})
+        return attrs
+
     def create(self, validated_data):
-        full_name = validated_data.pop("full_name")
+        full_name = validated_data.pop("full_name", "").strip()
         password = validated_data.pop("password")
 
         user = User(**validated_data)
@@ -145,7 +150,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.approved_at = timezone.now()
         user.save()
 
-        AdviserProfile.objects.create(user=user, full_name=full_name)
+        if user.role == User.Role.ADVISER:
+            AdviserProfile.objects.create(user=user, full_name=full_name)
 
         return user
 
