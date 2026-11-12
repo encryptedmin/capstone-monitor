@@ -55,6 +55,12 @@ render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
 if render_hostname and render_hostname not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(render_hostname)
 
+# Render terminates TLS at its edge proxy and forwards the original scheme.
+# Trust that header so Django and Django REST Framework do not generate HTTP
+# absolute URLs for requests that arrived over HTTPS.
+if running_on_render:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # Application definition
 
 INSTALLED_APPS = [

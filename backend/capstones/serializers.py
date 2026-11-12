@@ -1,6 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.reverse import reverse
+from django.urls import reverse
 
 from accounts.models import SchoolYear, StudentProfile, User
 from accounts.names import name_key
@@ -89,7 +89,6 @@ class CapstoneGroupSerializer(serializers.ModelSerializer):
         return reverse(
             "capstonegroup-title-document",
             kwargs={"pk": obj.pk},
-            request=self.context.get("request"),
         )
 
     def get_milestones_completed(self, obj):
@@ -128,7 +127,6 @@ class CapstoneGroupRequestSerializer(serializers.ModelSerializer):
             data["title_document"] = reverse(
                 "capstonegroup-title-document",
                 kwargs={"pk": instance.pk},
-                request=self.context.get("request"),
             )
         return data
 

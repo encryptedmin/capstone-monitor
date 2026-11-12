@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.reverse import reverse
+from django.urls import reverse
 
 from config.file_responses import display_file_name
 from .models import Feedback, Submission, SubmissionHistory
@@ -26,7 +26,6 @@ class SubmissionHistorySerializer(serializers.ModelSerializer):
         return reverse(
             "submission-history-file",
             kwargs={"pk": obj.submission_id, "history_id": obj.pk},
-            request=self.context.get("request"),
         )
 
     def get_file_name(self, obj):
@@ -69,7 +68,6 @@ class SubmissionSerializer(serializers.ModelSerializer):
         return reverse(
             "submission-file",
             kwargs={"pk": obj.pk},
-            request=self.context.get("request"),
         )
 
     def get_file_name(self, obj):

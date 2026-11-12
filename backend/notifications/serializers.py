@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.reverse import reverse
+from django.urls import reverse
 
 from config.file_responses import display_file_name
 
@@ -58,6 +58,5 @@ class DocumentTemplateSerializer(serializers.ModelSerializer):
             data["file"] = reverse(
                 "document-template-file",
                 kwargs={"pk": instance.pk},
-                request=self.context.get("request"),
             )
         return data
