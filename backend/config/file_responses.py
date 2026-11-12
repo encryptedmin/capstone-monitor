@@ -19,9 +19,16 @@ def private_file_response(file_field):
     if not file_field or not file_field.name:
         raise Http404("File not found.")
 
+    stream = None
     try:
         stream = file_field.open("rb")
+        storage_stream = getattr(stream, "file", stream)
+        validate = getattr(storage_stream, "validate", None)
+        if validate:
+            validate()
     except (FileNotFoundError, OSError, ValueError) as exc:
+        if stream is not None:
+            stream.close()
         raise Http404("File not found.") from exc
 
     filename = display_file_name(file_field.name)

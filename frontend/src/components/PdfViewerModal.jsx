@@ -110,7 +110,7 @@ export function PdfViewerModal({ file, onClose }) {
         if (!cancelled) {
           setErrorMessage(
             error.response?.status === 404
-              ? "The server could not find this upload. On Render's free plan, files stored on the service can be lost after a restart; if so, upload the file again."
+              ? "This file isn't available or complete in the database. Ask your adviser or administrator to upload it again."
               : "The server couldn't return this file. Check your connection and try again."
           );
           setStatus("error");

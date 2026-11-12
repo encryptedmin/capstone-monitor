@@ -2,9 +2,11 @@ import hashlib
 import mimetypes
 import os
 import uuid
+from bisect import bisect_right
 
 from django.core.files.storage import Storage
 from django.db import IntegrityError, transaction
+from django.db.models.functions import Length
 
 from .models import StoredFile, StoredFileChunk
 
@@ -27,6 +29,8 @@ class AivenDatabaseFile:
         self.closed = False
         self._cached_index = None
         self._cached_chunk = b""
+        self._chunk_layout = None
+        self._chunk_starts = None
 
     def readable(self):
         return True
@@ -60,10 +64,22 @@ class AivenDatabaseFile:
         if size == 0:
             return b""
 
+        self._load_chunk_layout()
         result = bytearray()
         remaining = size
+        layout_index = bisect_right(self._chunk_starts, self.position) - 1
         while remaining:
-            chunk_index = self.position // CHUNK_SIZE
+            if layout_index < 0 or layout_index >= len(self._chunk_layout):
+                raise OSError("Stored file content is incomplete.")
+
+            chunk_index, chunk_start, chunk_size = self._chunk_layout[layout_index]
+            chunk_end = chunk_start + chunk_size
+            if self.position >= chunk_end:
+                layout_index += 1
+                continue
+            if self.position < chunk_start:
+                raise OSError("Stored file content is incomplete.")
+
             if self._cached_index != chunk_index:
                 try:
                     self._cached_chunk = bytes(
@@ -74,16 +90,47 @@ class AivenDatabaseFile:
                     )
                 except StoredFileChunk.DoesNotExist as exc:
                     raise OSError("Stored file content is incomplete.") from exc
+                if len(self._cached_chunk) != chunk_size:
+                    raise OSError("Stored file content is incomplete.")
                 self._cached_index = chunk_index
 
-            chunk_offset = self.position % CHUNK_SIZE
+            chunk_offset = self.position - chunk_start
             count = min(remaining, len(self._cached_chunk) - chunk_offset)
             if count <= 0:
                 raise OSError("Stored file content is incomplete.")
             result.extend(self._cached_chunk[chunk_offset : chunk_offset + count])
             self.position += count
             remaining -= count
+            if self.position >= chunk_end:
+                layout_index += 1
         return bytes(result)
+
+    def _load_chunk_layout(self):
+        if self._chunk_layout is not None:
+            return
+
+        layout = []
+        offset = 0
+        rows = (
+            StoredFileChunk.objects.filter(stored_file_id=_key_for(self.name))
+            .order_by("chunk_index")
+            .values_list("chunk_index", Length("content"))
+        )
+        for chunk_index, chunk_size in rows:
+            chunk_size = int(chunk_size or 0)
+            if chunk_size == 0:
+                continue
+            layout.append((chunk_index, offset, chunk_size))
+            offset += chunk_size
+
+        if offset != self.size:
+            raise OSError("Stored file content is incomplete.")
+        self._chunk_layout = layout
+        self._chunk_starts = [chunk_start for _, chunk_start, _ in layout]
+
+    def validate(self):
+        """Check stored chunk lengths before streaming the response headers."""
+        self._load_chunk_layout()
 
     def close(self):
         self._cached_chunk = b""
@@ -132,20 +179,22 @@ class AivenDatabaseStorage(Storage):
                     batch = []
                     total_size = 0
                     chunk_index = 0
-                    for chunk in content.chunks(chunk_size=CHUNK_SIZE):
-                        chunk = bytes(chunk)
-                        batch.append(
-                            StoredFileChunk(
-                                stored_file_id=key,
-                                chunk_index=chunk_index,
-                                content=chunk,
+                    for upload_chunk in content.chunks(chunk_size=CHUNK_SIZE):
+                        upload_chunk = memoryview(upload_chunk)
+                        for offset in range(0, len(upload_chunk), CHUNK_SIZE):
+                            chunk = bytes(upload_chunk[offset : offset + CHUNK_SIZE])
+                            batch.append(
+                                StoredFileChunk(
+                                    stored_file_id=key,
+                                    chunk_index=chunk_index,
+                                    content=chunk,
+                                )
                             )
-                        )
-                        total_size += len(chunk)
-                        chunk_index += 1
-                        if len(batch) >= INSERT_BATCH_SIZE:
-                            StoredFileChunk.objects.bulk_create(batch)
-                            batch.clear()
+                            total_size += len(chunk)
+                            chunk_index += 1
+                            if len(batch) >= INSERT_BATCH_SIZE:
+                                StoredFileChunk.objects.bulk_create(batch)
+                                batch.clear()
                     if batch:
                         StoredFileChunk.objects.bulk_create(batch)
                     StoredFile.objects.filter(key=key).update(size=total_size)
