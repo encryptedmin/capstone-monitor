@@ -1,4 +1,7 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
+
+from config.file_responses import display_file_name
 
 from .models import Announcement, DocumentTemplate, Notification
 
@@ -28,6 +31,8 @@ class AnnouncementSerializer(serializers.ModelSerializer):
 
 
 class DocumentTemplateSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(use_url=False)
+    file_name = serializers.SerializerMethodField()
     uploaded_by_name = serializers.CharField(source="uploaded_by.email", read_only=True, default=None)
 
     class Meta:
@@ -37,8 +42,22 @@ class DocumentTemplateSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "file",
+            "file_name",
             "uploaded_by",
             "uploaded_by_name",
             "created_at",
         ]
         read_only_fields = ["uploaded_by", "created_at"]
+
+    def get_file_name(self, obj):
+        return display_file_name(obj.file.name)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.file:
+            data["file"] = reverse(
+                "document-template-file",
+                kwargs={"pk": instance.pk},
+                request=self.context.get("request"),
+            )
+        return data

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
+from config.file_responses import display_file_name
 from .models import Feedback, Submission, SubmissionHistory
 
 
@@ -14,6 +15,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
 
 class SubmissionHistorySerializer(serializers.ModelSerializer):
+    file = serializers.FileField(use_url=False)
     file_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -28,7 +30,7 @@ class SubmissionHistorySerializer(serializers.ModelSerializer):
         )
 
     def get_file_name(self, obj):
-        return obj.file.name.rsplit("/", 1)[-1]
+        return display_file_name(obj.file.name)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -37,6 +39,7 @@ class SubmissionHistorySerializer(serializers.ModelSerializer):
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(use_url=False)
     file_name = serializers.SerializerMethodField()
     feedback = FeedbackSerializer(many=True, read_only=True)
     history = SubmissionHistorySerializer(many=True, read_only=True)
@@ -70,7 +73,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
         )
 
     def get_file_name(self, obj):
-        return obj.file.name.rsplit("/", 1)[-1]
+        return display_file_name(obj.file.name)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

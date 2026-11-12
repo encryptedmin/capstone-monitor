@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from accounts.models import User
 from accounts.permissions import IsAdmin, IsAdminOrAdviser, IsStudent
 from accounts.serializers import UserSerializer
+from config.file_responses import private_file_response
 
 from .models import CapstoneGroup, GroupMember
 from .serializers import (
@@ -75,6 +76,17 @@ class CapstoneGroupViewSet(viewsets.ModelViewSet):
         if user.is_adviser and group.adviser_id != user.id:
             raise PermissionDenied("You can only manage your own assigned groups.")
         serializer.save()
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="title-document",
+        url_name="title-document",
+    )
+    def title_document(self, request, pk=None):
+        """Serve a group's title document only to its authorized members/staff."""
+        group = self.get_object()
+        return private_file_response(group.title_document)
 
     @action(detail=True, methods=["post"])
     def accept(self, request, pk=None):

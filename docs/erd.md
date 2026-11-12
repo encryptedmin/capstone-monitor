@@ -64,6 +64,7 @@ erDiagram
         bigint requested_by_id FK
         bigint school_year_id FK
         varchar capstone_title
+        varchar title_document
         varchar status
         text rejection_reason
         datetime created_at
@@ -141,6 +142,21 @@ erDiagram
         datetime created_at
     }
 
+    STORED_FILE {
+        varchar key PK
+        varchar name
+        varchar content_type
+        bigint size
+        datetime created_at
+    }
+
+    STORED_FILE_CHUNK {
+        bigint id PK
+        varchar stored_file_id FK
+        int chunk_index
+        longblob content
+    }
+
     USER ||--o| STUDENT_PROFILE : has
     USER ||--o| ADVISER_PROFILE : has
     SCHOOL_YEAR o|--o{ STUDENT_PROFILE : enrolls
@@ -160,6 +176,7 @@ erDiagram
     USER ||--o{ NOTIFICATION : receives
     USER o|--o{ ANNOUNCEMENT : posts
     USER o|--o{ DOCUMENT_TEMPLATE : uploads
+    STORED_FILE ||--|{ STORED_FILE_CHUNK : stores
 ```
 
 ## Notes
@@ -176,6 +193,8 @@ erDiagram
   member's name if their user account is deleted.
 - A group can have one submission per milestone. Resubmission updates that
   submission and saves the previous file and status in `SUBMISSION_HISTORY`.
-- Uploaded file columns store file paths/keys. The PDF files themselves live in
-  the configured file storage, not in these database rows.
+- File fields store a key. `STORED_FILE` and `STORED_FILE_CHUNK` hold the file
+  metadata and bytes in MySQL, in one-megabyte chunks. The key links these rows
+  at the storage layer; domain tables do not have separate foreign keys to
+  `STORED_FILE`.
 - `REPORTS` has no model of its own; reports are generated from existing data.

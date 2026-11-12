@@ -1,8 +1,17 @@
 import mimetypes
 from pathlib import PurePosixPath
+import string
 
 from django.http import FileResponse, Http404
 from django.utils.http import content_disposition_header
+
+
+def display_file_name(name):
+    filename = PurePosixPath(name).name
+    prefix, separator, remainder = filename[:32], filename[32:33], filename[33:]
+    if separator == "_" and len(prefix) == 32 and all(char in string.hexdigits for char in prefix):
+        return remainder
+    return filename
 
 
 def private_file_response(file_field):
@@ -15,8 +24,12 @@ def private_file_response(file_field):
     except (FileNotFoundError, OSError, ValueError) as exc:
         raise Http404("File not found.") from exc
 
-    filename = PurePosixPath(file_field.name).name
-    content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    filename = display_file_name(file_field.name)
+    content_type = (
+        getattr(stream, "content_type", None)
+        or mimetypes.guess_type(filename)[0]
+        or "application/octet-stream"
+    )
     response = FileResponse(stream, content_type=content_type)
     response["Content-Disposition"] = content_disposition_header(False, filename)
     response["Cache-Control"] = "private, no-store"

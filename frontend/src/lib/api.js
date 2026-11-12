@@ -206,7 +206,6 @@ export const announcementsApi = {
 
 export const templatesApi = {
   list: () => api.get("/document-templates/"),
-  fileUrl: (id) => `/document-templates/${id}/file/`,
   create: (formData) =>
     api.post("/document-templates/", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -227,5 +226,8 @@ export const reportsApi = {
 };
 
 export const pdfApi = {
-  fetch: (url) => api.get(url, { responseType: "arraybuffer" }),
+  fetch: (url) => {
+    const requestUrl = url.startsWith("/api/") ? url.slice(4) : url;
+    return api.get(requestUrl, { responseType: "arraybuffer" });
+  },
 };

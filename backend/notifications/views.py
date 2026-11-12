@@ -1,9 +1,9 @@
-from django.http import FileResponse, Http404
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from accounts.permissions import IsAdmin
+from config.file_responses import private_file_response
 
 from .models import Announcement, DocumentTemplate, Notification
 from .serializers import AnnouncementSerializer, DocumentTemplateSerializer, NotificationSerializer
@@ -73,10 +73,4 @@ class DocumentTemplateViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"], url_path="file")
     def file(self, request, pk=None):
         template = self.get_object()
-        if not template.file:
-            raise Http404("The template file is missing.")
-        try:
-            file_handle = template.file.open("rb")
-        except (FileNotFoundError, OSError):
-            raise Http404("The template file is missing.")
-        return FileResponse(file_handle, filename=template.file.name.rsplit("/", 1)[-1])
+        return private_file_response(template.file)

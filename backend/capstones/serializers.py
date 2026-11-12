@@ -1,5 +1,6 @@
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from accounts.models import SchoolYear, StudentProfile, User
 from accounts.names import name_key
@@ -48,6 +49,7 @@ class CapstoneGroupSerializer(serializers.ModelSerializer):
     milestones_total = serializers.SerializerMethodField()
     milestones_completed = serializers.SerializerMethodField()
     school_year_label = serializers.CharField(source="school_year.label", read_only=True, default=None)
+    title_document = serializers.SerializerMethodField()
 
     class Meta:
         model = CapstoneGroup
@@ -81,6 +83,15 @@ class CapstoneGroupSerializer(serializers.ModelSerializer):
     def get_milestones_total(self, obj):
         return obj.milestones.count()
 
+    def get_title_document(self, obj):
+        if not obj.title_document:
+            return None
+        return reverse(
+            "capstonegroup-title-document",
+            kwargs={"pk": obj.pk},
+            request=self.context.get("request"),
+        )
+
     def get_milestones_completed(self, obj):
         return obj.milestones.filter(status="completed").count()
 
@@ -105,10 +116,21 @@ class CapstoneGroupRequestSerializer(serializers.ModelSerializer):
         max_length=MAX_PARTNERS,
         help_text="Full names of the capstone partner(s) of the requester.",
     )
+    title_document = serializers.FileField(use_url=False, required=False, allow_null=True)
 
     class Meta:
         model = CapstoneGroup
         fields = ["id", "capstone_title", "title_document", "adviser", "school_year", "partner_names"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.title_document:
+            data["title_document"] = reverse(
+                "capstonegroup-title-document",
+                kwargs={"pk": instance.pk},
+                request=self.context.get("request"),
+            )
+        return data
 
     def validate_partner_names(self, value):
         cleaned = [" ".join(name.split()) for name in value]

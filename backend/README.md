@@ -13,6 +13,7 @@ Blazor), designed to pair with a React (Vite) frontend.
 | Groups / GroupMembers | `capstones`     | Renamed `CapstoneGroup` to avoid clashing with Django's built-in `auth.Group` |
 | Milestones            | `milestones`    | Status: pending / in_progress / completed / overdue |
 | Submissions           | `submissions`   | File uploads + `Feedback` (adviser comments) |
+| Uploaded file bytes   | `uploads`       | File metadata and one-megabyte chunks stored in the configured MySQL database |
 | Notifications         | `notifications` | Per-recipient alerts, auto-created on milestone/submission events |
 | Reports (new)         | `reports`       | JSON analytics + printable PDF, matching the "Automated Reporting" objective |
 
@@ -135,6 +136,15 @@ The startup script runs `python manage.py ensure_database` followed by
 `python manage.py migrate --noinput`. These migrations create the current
 application schema and include a MySQL-compatible active-login uniqueness
 rule.
+
+Uploaded file bytes are stored in `uploads_storedfile` and
+`uploads_storedfilechunk` in the same MySQL database. File downloads read those
+rows through authenticated API endpoints; Render's local filesystem is not
+used for uploaded files.
+
+Files uploaded by an older deployment while it used Render's local filesystem
+are not copied by this migration. If those bytes are no longer available on
+that service, the corresponding documents must be uploaded again.
 
 The previous local database file, if present, is not used or modified by the
 MySQL backend. `migrate` creates schema; it does not copy records from that

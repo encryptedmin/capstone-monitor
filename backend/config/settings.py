@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'milestones',
     'submissions',
     'notifications',
+    'uploads',
     'reports',
 ]
 
@@ -183,16 +184,14 @@ STATICFILES_DIRS = (
 )
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "uploads.storage.AivenDatabaseStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# Media files (student submission uploads)
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Uploaded file bytes are stored in Aiven MySQL via AivenDatabaseStorage.
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

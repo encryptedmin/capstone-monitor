@@ -78,9 +78,9 @@ export default function Announcements() {
                   type="button"
                   onClick={() =>
                     setPreviewFile({
-                      url: templatesApi.fileUrl(t.id),
+                      url: t.file,
                       title: t.title,
-                      name: t.file?.split("/").pop(),
+                      name: t.file_name,
                     })
                   }
                   className="inline-flex items-center gap-1.5 text-sm text-accent hover:brightness-90"
