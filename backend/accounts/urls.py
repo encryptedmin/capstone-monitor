@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     LoginView,
     LogoutView,
+    FirstLoginPasswordChangeView,
     MeView,
     RegisterView,
     SchoolYearViewSet,
@@ -19,6 +20,7 @@ router.register("school-years", SchoolYearViewSet, basename="school-year")
 urlpatterns = [
     path("auth/login/", LoginView.as_view(), name="login"),
     path("auth/logout/", LogoutView.as_view(), name="logout"),
+    path("auth/first-login-password/", FirstLoginPasswordChangeView.as_view(), name="first-login-password"),
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/refresh/", StrictTokenRefreshView.as_view(), name="token_refresh"),
     path("auth/me/", MeView.as_view(), name="me"),

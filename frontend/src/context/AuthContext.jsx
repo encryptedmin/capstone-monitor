@@ -54,6 +54,12 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  const changeFirstLoginPassword = async (password) => {
+    const { data } = await authApi.changeFirstLoginPassword(password);
+    setUser(data);
+    return data;
+  };
+
   const logout = async () => {
     const refresh = tokenStore.refresh;
     if (refresh) {
@@ -68,7 +74,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser: loadUser, changeFirstLoginPassword }}>
       {children}
     </AuthContext.Provider>
   );

@@ -78,6 +78,10 @@ class User(AbstractUser):
         help_text="Set the first time an admin approves this account. "
         "Null means the account has never been approved (pending).",
     )
+    must_change_password = models.BooleanField(
+        default=False,
+        help_text="Require the adviser to choose a new password at their first login.",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

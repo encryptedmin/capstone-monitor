@@ -97,6 +97,7 @@ export const authApi = {
   login: (email, password) =>
     api.post("/auth/login/", { email, password, device_id: tokenStore.deviceId }),
   logout: (refresh) => api.post("/auth/logout/", { refresh }),
+  changeFirstLoginPassword: (password) => api.post("/auth/first-login-password/", { password }),
   register: (payload) => api.post("/auth/register/", payload),
   me: () => api.get("/auth/me/"),
 };

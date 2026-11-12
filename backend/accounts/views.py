@@ -119,6 +119,41 @@ class MeView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
+class FirstLoginPasswordChangeView(APIView):
+    """Let a newly created adviser replace their admin-set password once."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if user.role != User.Role.ADVISER or not user.must_change_password:
+            return Response(
+                {"detail": "A first-login password change is not required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        password = request.data.get("password")
+        if not isinstance(password, str) or not password:
+            return Response(
+                {"password": ["A new password is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if user.check_password(password):
+            return Response(
+                {"password": ["Choose a password different from your temporary password."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            validate_password(password, user=user)
+        except ValidationError as exc:
+            return Response({"password": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(password)
+        user.must_change_password = False
+        user.save(update_fields=["password", "must_change_password"])
+        return Response(UserSerializer(user).data)
+
+
 class UserViewSet(viewsets.ModelViewSet):
     """
     Administrator-only 'Manage Users' module: Create / Read / Update / Delete

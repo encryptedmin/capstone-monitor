@@ -275,7 +275,7 @@ export function ProgressRing({ value, total, size = 132, stroke = 11 }) {
 
 // --- Modal -------------------------------------------------------------
 
-export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
+export function Modal({ open, onClose, title, children, width = "max-w-md", showCloseButton = true }) {
   // Intentionally NO backdrop-click or Escape-to-close: a modal only closes via
   // the X button or an explicit Cancel/Close button, so stray clicks never lose work.
   useEffect(() => {
@@ -309,14 +309,16 @@ export function Modal({ open, onClose, title, children, width = "max-w-md" }) {
           >
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-display text-xl font-semibold text-fg">{title}</h3>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="rounded-lg p-1.5 text-fg/50 hover:bg-fg/[0.08] hover:text-fg transition-colors"
-              >
-                <X size={20} />
-              </button>
+              {showCloseButton && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close"
+                  className="rounded-lg p-1.5 text-fg/50 hover:bg-fg/[0.08] hover:text-fg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              )}
             </div>
             {children}
           </motion.div>

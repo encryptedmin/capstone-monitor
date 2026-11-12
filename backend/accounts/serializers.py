@@ -100,11 +100,12 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "approved_at",
             "account_status",
+            "must_change_password",
             "created_at",
             "student_profile",
             "adviser_profile",
         ]
-        read_only_fields = ["id", "created_at", "approved_at"]
+        read_only_fields = ["id", "created_at", "approved_at", "must_change_password"]
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -148,6 +149,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.is_active = True
         user.approved_at = timezone.now()
+        user.must_change_password = user.role == User.Role.ADVISER
         user.save()
 
         if user.role == User.Role.ADVISER:

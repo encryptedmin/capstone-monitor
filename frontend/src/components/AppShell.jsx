@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "./NotificationBell";
-import { Avatar, IconButton, RoleBadge, ThemeToggle } from "./ui";
+import { Avatar, Button, Field, IconButton, inputClass, Modal, RoleBadge, ThemeToggle } from "./ui";
 
 const NAV_BY_ROLE = {
   admin: [
@@ -121,7 +121,7 @@ function UserCard({ user, displayName, onLogout }) {
 }
 
 export function AppShell() {
-  const { user, logout } = useAuth();
+  const { user, logout, changeFirstLoginPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -241,6 +241,72 @@ export function AppShell() {
           <Outlet />
         </motion.main>
       </div>
+      {user.role === "adviser" && user.must_change_password && (
+        <FirstLoginPasswordModal onSubmit={changeFirstLoginPassword} />
+      )}
     </div>
+  );
+}
+
+function FirstLoginPasswordModal({ onSubmit }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const mismatch = confirmPassword.length > 0 && password !== confirmPassword;
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (password !== confirmPassword) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onSubmit(password);
+    } catch (err) {
+      const details = err.response?.data?.password;
+      setError(Array.isArray(details) ? details.join(" ") : details || err.response?.data?.detail || "Could not change your password.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      title="Secure your account"
+      showCloseButton={false}
+      onClose={() => {}}
+    >
+      <p className="text-sm text-fg/65 mb-4">
+        For security and privacy, choose a new password before continuing. You only need to do this once.
+      </p>
+      <form onSubmit={submit}>
+        <Field label="New password">
+          <input
+            className={inputClass}
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
+        </Field>
+        <Field label="Confirm new password">
+          <input
+            className={inputClass}
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            required
+          />
+        </Field>
+        {mismatch && <p className="text-xs text-danger mb-3">Passwords do not match.</p>}
+        {error && <p role="alert" className="text-xs text-danger mb-3">{error}</p>}
+        <Button type="submit" className="w-full" loading={saving} disabled={!password || !confirmPassword || mismatch}>
+          Change password
+        </Button>
+      </form>
+    </Modal>
   );
 }
